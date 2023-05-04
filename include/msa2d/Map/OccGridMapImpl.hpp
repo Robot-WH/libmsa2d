@@ -1,6 +1,6 @@
 /**
- * @file OccGridMapOperation.hpp
- * @author lwh (you@domain.com)
+ * @file OccGridMapBase.hpp
+ * @author lwh(you@domain.com)
  * @brief 
  * @version 0.1
  * @date 2022-10-02
@@ -9,67 +9,76 @@
  * 
  */
 #pragma once 
-#include <mutex>
 #include "OccGridMapBase.hpp"
-#include "../common/UtilFunctions.hpp"
-
 namespace msa2d {
 namespace map {
 
 /**
- * @brief 占用栅格地图操作,包含更新、同步、移动等
+ * @brief Occupancy grid map 
  * 
  */
-class OccGridMapOperation {
+template<typename _OccGridType>
+class OccGridMapImpl : public OccGridMapBase {
 public:
-    // OccGridMapOperation(GridMap* gridMapIn, OccGridMapUtilConfig<GridMap>* gridMapUtilIn)
-    OccGridMapOperation(OccGridMap* gridMapIn)
-        : gridMap_(gridMapIn), mapModifyMutex_(new std::mutex()), 
-            grid_occ_mark_(2), grid_free_mark_(1) {
-    }
-    
-    virtual ~OccGridMapOperation() {
-    }
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    /**
+     * @param map_resolution 地图的分辨率 
+     * @param size 地图的栅格size   
+     * @param map_in_world map坐标系原点在world坐标系的坐标
+     */    
+    OccGridMapImpl(float map_resolution, const Eigen::Vector2i& size, 
+                                        const Eigen::Vector2f& map_in_world)
+        : occ_grid_map_(map_resolution, size, map_in_world),
+            grid_occ_mark_(2), grid_free_mark_(1)  {}
 
-    // 声明了析构则移动被抑制  所以要手动生成移动
-    OccGridMapOperation(OccGridMapOperation&& other) {
-        gridMap_ = other.gridMap_;
-        other.gridMap_ = nullptr;
-        mapModifyMutex_ = other.mapModifyMutex_; 
-        other.mapModifyMutex_ = nullptr;
-        grid_free_mark_ = 1; 
-        grid_occ_mark_ = 2;
+    virtual ~OccGridMapImpl() {}
+
+    void updateSetOccupied(int index) override {
+        occ_grid_map_.getCell(index).updateSetOccupied();
     }
 
-    // 定义移动后，拷贝被自动删除了 
-    // OccGridMapOperation(const OccGridMapOperation& other) = delete; 
-
-    void cleanup() {
-        delete gridMap_;
-        delete mapModifyMutex_;  
+    void updateSetFree(int index) override {
+        occ_grid_map_.getCell(index).updateSetFree();
     }
 
-    // 重置地图
-    void reset() {
-        gridMap_->clear();
+    void updateUnsetFree(int index) override {
+        occ_grid_map_.getCell(index).updateUnsetFree();
     }
 
-    // // 重置cache中的数据
-    // void resetCachedData() {
-    //     gridMapUtil->resetCachedData();
-    // }
+    float getGridProbability(int index) const override {
+        return occ_grid_map_.getCell(index).getGridProbability();
+    }
 
-    //// 获取本图层的尺度 scale = 1.0 / map_resolution.
-    float getScaleToMap() const { return gridMap_->getScaleToMap(); };
+    bool isOccupied(int xMap, int yMap) const override {
+        return occ_grid_map_.getCell(xMap, yMap).isOccupied();
+    }
 
-    const OccGridMap& getGridMap() const { return *gridMap_; };
-    OccGridMap& getGridMap() { return *gridMap_; };
+    bool isFree(int xMap, int yMap) const override {
+        return occ_grid_map_.getCell(xMap, yMap).isFree();
+    }
 
-    // OccGridMapUtilConfig<GridMap>& getOccGridMapUtil1() {return *gridMapUtil;};
+    bool isOccupied(int index) const override {
+        return occ_grid_map_.getCell(index).isOccupied();
+    }
 
-    /// 获取当前地图的互斥锁
-    std::mutex* getMapMutex() {
-        return mapModifyMutex_;
+    bool isFree(int index) const override {
+        return occ_grid_map_.getCell(index).isFree();
+    }
+
+    void reset() override {
+        occ_grid_map_.reset();   
+    }
+
+    void clear() override {
+        occ_grid_map_.clear();  
+    }
+
+    void moveTo(const Eigen::Vector2f& new_map_pos_in_world) override {
+        occ_grid_map_.moveTo(new_map_pos_in_world);
+    }
+
+    const GridMapBase& getGridMapBase() const override {
+        return occ_grid_map_;
     }
 
     /**
@@ -77,12 +86,13 @@ public:
      * @param laser_same_scale   当前scan激光数据 注意该激光已经进行尺度转换了，和当前GridMap栅格坐标尺度相同
      * @param scan_pose_in_world  当前scan世界系下位姿
      */
-    void updateByScan(const std::vector<Eigen::Vector2f>& laser_same_scale, const Eigen::Vector3f& scan_pose_in_world) {
+    void updateByScan(const std::vector<Eigen::Vector2f>& laser_same_scale, 
+            const Eigen::Vector3f& scan_pose_in_world) override {
         mapModifyMutex_->lock(); //加锁，禁止其他线程竞争地图资源
         /// 更新地图
-        std::vector<uint8_t> grid_update_marksheet(gridMap_->getMapGridSize(), 0);     // 为了保证 每一个grid只被更新一次，因此设置一个mark
+        std::vector<uint8_t> grid_update_marksheet(occ_grid_map_.getMapGridSize(), 0);     // 为了保证 每一个grid只被更新一次，因此设置一个mark
         // 世界坐标转换到该栅格坐标   robot -> grid map
-        Eigen::Vector3f mapPose(gridMap_->getMapCoordsPose(scan_pose_in_world));
+        Eigen::Vector3f mapPose(occ_grid_map_.getMapCoordsPose(scan_pose_in_world));
         Eigen::Isometry2f poseTransform(
             Eigen::Translation2f(mapPose[0], mapPose[1]) * Eigen::Rotation2Df(mapPose[2]));
         Eigen::Vector2f scanBeginMapf(poseTransform * Eigen::Vector2f{0, 0});    // T(map<-laser) * t(laser) = t(map)
@@ -100,35 +110,9 @@ public:
             }
         }
 
-        gridMap_->setUpdated();
+        occ_grid_map_.setUpdated();
         mapModifyMutex_->unlock(); //地图解锁
     }
-
-    /**
-     * @brief: 将当前GridMap的坐标原点移动到new_map_pos_in_world
-     */    
-    void moveTo(const Eigen::Vector2f& new_map_pos_in_world) {
-        Eigen::Vector2i pos_in_prev_map = gridMap_->getMapCoords(new_map_pos_in_world).cast<int>();  
-        // std::cout << "pos_in_prev_map: " << pos_in_prev_map.transpose() << std::endl;
-        auto new_map = gridMap_->createSameSizeMap(); 
-        // 遍历原Map的每一个Grid
-        for (uint16_t i = 0; i < gridMap_->getSizeX(); ++i) {
-            for (uint16_t j = 0; j < gridMap_->getSizeY(); ++j) {
-                // 计算该Grid在移动后的地图的Grid坐标
-                Eigen::Vector2i new_grid_pos{i - pos_in_prev_map[0], j - pos_in_prev_map[1]};
-                // 是否在该地图范围内
-                if (!gridMap_->pointOutOfMapBounds(new_grid_pos)) {
-                    new_map[new_grid_pos[1] * gridMap_->getSizeX() + new_grid_pos[0]] = gridMap_->getCell(i, j);
-                }
-            }
-        }
-        gridMap_->resetArray(new_map);
-        // 对新地图原点在旧地图的坐标进行了取整   使得新地图与旧地图的栅格完全重合
-        Eigen::Vector2f new_map_adjust_pos_in_world = 
-            gridMap_->getWorldCoords(Eigen::Vector2f{pos_in_prev_map[0], pos_in_prev_map[1]});  
-        gridMap_->setMapTransformation(new_map_adjust_pos_in_world); 
-    }
-
 protected:
     /**
      * @brief: Bresenhami画线算法更新map
@@ -138,15 +122,15 @@ protected:
      * @param max_length 更新的最大长度  
      * @return {*}
      */    
-    inline void updateLineBresenhami(const Eigen::Vector2i& beginMap, 
-                                                                            const Eigen::Vector2i& endMap, 
-                                                                            std::vector<uint8_t>& grid_update_marksheet,
-                                                                            unsigned int max_length = UINT_MAX) {
+    void updateLineBresenhami(const Eigen::Vector2i& beginMap, 
+                                                                    const Eigen::Vector2i& endMap, 
+                                                                    std::vector<uint8_t>& grid_update_marksheet,
+                                                                    unsigned int max_length = UINT_MAX) {
         int x0 = beginMap[0];
         int y0 = beginMap[1];
 
         //check if beam start point is inside map, cancel update if this is not the case
-        if ((x0 < 0) || (x0 >= gridMap_->getSizeX()) || (y0 < 0) || (y0 >= gridMap_->getSizeY())) {
+        if ((x0 < 0) || (x0 >= occ_grid_map_.getSizeX()) || (y0 < 0) || (y0 >= occ_grid_map_.getSizeY())) {
             return;
         }
 
@@ -154,7 +138,7 @@ protected:
         int y1 = endMap[1];
 
         //check if beam end point is inside map, cancel update if this is not the case
-        if ((x1 < 0) || (x1 >= gridMap_->getSizeX()) || (y1 < 0) || (y1 >= gridMap_->getSizeY())) {
+        if ((x1 < 0) || (x1 >= occ_grid_map_.getSizeX()) || (y1 < 0) || (y1 >= occ_grid_map_.getSizeY())) {
             return;
         }
 
@@ -165,9 +149,9 @@ protected:
         unsigned int abs_dy = abs(dy);
 
         int offset_dx = math::sign(dx);
-        int offset_dy = math::sign(dy) * gridMap_->getSizeX();    
+        int offset_dy = math::sign(dy) * occ_grid_map_.getSizeX();    
 
-        unsigned int startOffset = beginMap.y() * gridMap_->getSizeX() + beginMap.x();
+        unsigned int startOffset = beginMap.y() * occ_grid_map_.getSizeX() + beginMap.x();
 
         //if x is dominant
         if (abs_dx >= abs_dy) {
@@ -179,12 +163,12 @@ protected:
             bresenham2D(abs_dy, abs_dx, error_x, offset_dy, offset_dx, startOffset, grid_update_marksheet);
         }
         // 将终点单独拿出来，设置占用
-        unsigned int endOffset = endMap.y() * gridMap_->getSizeX() + endMap.x();
+        unsigned int endOffset = endMap.y() * occ_grid_map_.getSizeX() + endMap.x();
         bresenhamCellOcc(endOffset, grid_update_marksheet);
     }
 
     // 进行bresenham画线
-    inline void bresenham2D(unsigned int abs_da, unsigned int abs_db, int error_b, 
+    void bresenham2D(unsigned int abs_da, unsigned int abs_db, int error_b, 
             int offset_a, int offset_b, unsigned int offset, std::vector<uint8_t>& grid_update_marksheet) {
         // https://www.jianshu.com/p/d63bf63a0e28
         // 先把起点格子设置成free
@@ -216,7 +200,7 @@ protected:
         // 每一轮画线，每个格子只更新一次free
         // grid_update_marksheet 初始化为0 ，某个栅格占用则设置为 grid_occ_mark_ = 2 ，free 则 grid_free_mark_ = 1
         if (grid_update_marksheet[index] < grid_free_mark_) {   
-            gridMap_->updateSetFree(index); 
+            updateSetFree(index); 
             grid_update_marksheet[index] = grid_free_mark_;
         }
     }
@@ -232,19 +216,17 @@ protected:
         if (grid_update_marksheet[index] < grid_occ_mark_) {
             // 如果这个格子被设置成free了，先取消free，再设置占用
             if (grid_update_marksheet[index] == grid_free_mark_) {
-                gridMap_->updateUnsetFree(index);
+                updateUnsetFree(index);
             }
-            gridMap_->updateSetOccupied(index);
+            updateSetOccupied(index);
             grid_update_marksheet[index] = grid_occ_mark_;
         }
     }
 
 private:
-    OccGridMap* gridMap_;                                        // 地图网格
-    // OccGridMapUtilConfig<GridMap>* gridMapUtil;      // 网格工具、设置
-    std::mutex* mapModifyMutex_ = nullptr;              // 地图锁，修改地图时，需要加锁避免多线程资源访问冲突。
+    GridMapImpl<_OccGridType> occ_grid_map_;  
     int grid_occ_mark_;
     int grid_free_mark_;
 };
-}
+} // namespace Estimator2D
 }

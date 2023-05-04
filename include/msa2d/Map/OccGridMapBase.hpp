@@ -9,75 +9,44 @@
  * 
  */
 #pragma once 
+#include <iostream>
 #include <Eigen/Geometry>
-#include "GridMapBase.hpp"
-#include "OccGridCell.hpp"
+#include <mutex>
+#include "GridMapImpl.hpp"
 #include "../Sensor/LaserPointContainer.h"
-
-
+#include "../common/UtilFunctions.hpp"
 namespace msa2d {
 namespace map {
 
-class OccGridMap : public GridMapBase<OccGridCell> {
+class OccGridMapBase {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    /**
-     * @param {float} map_resolution
-     * @param {Vector2i} &size 
-     * @param map_in_world map坐标系原点在world坐标系的坐标
-     */    
-    OccGridMap(float map_resolution, const Eigen::Vector2i &size, 
-        const Eigen::Vector2f& map_in_world) 
-        : GridMapBase<OccGridCell>(map_resolution, size, map_in_world) {
+    OccGridMapBase() : mapModifyMutex_(new std::mutex()) {}
+    /***********************************下面是针对占据栅格所新增的函数*************************************/
+    virtual ~OccGridMapBase() {
+        delete mapModifyMutex_;  
     }
 
-    virtual ~OccGridMap() {}
+    virtual void updateSetOccupied(int index) = 0;
+    virtual void updateSetFree(int index) = 0;
+    virtual void updateUnsetFree(int index) = 0; 
+    virtual float getGridProbability(int index) const = 0;
+    virtual bool isOccupied(int xMap, int yMap) const = 0;
+    virtual bool isFree(int xMap, int yMap) const = 0;
+    virtual bool isOccupied(int index) const = 0; 
+    virtual bool isFree(int index) const  = 0;
+    virtual void reset() = 0;
+    virtual void clear() = 0; 
+    virtual void updateByScan(const std::vector<Eigen::Vector2f>& laser_same_scale, 
+            const Eigen::Vector3f& scan_pose_in_world) = 0;  
+    virtual void moveTo(const Eigen::Vector2f& new_map_pos_in_world) = 0;
+    virtual const GridMapBase& getGridMapBase() const = 0;  
 
-    void updateSetOccupied(int index) {
-        this->getCell(index).updateSetOccupied();
+    /// 获取当前地图的互斥锁
+    std::mutex* getMapMutex() {
+        return mapModifyMutex_;
     }
-
-    void updateSetFree(int index) {
-        this->getCell(index).updateSetFree();
-    }
-
-    void updateUnsetFree(int index) {
-        this->getCell(index).updateUnsetFree();
-    }
-
-    float getGridProbabilityMap(int index) const {
-        return this->getCell(index).getGridProbability();
-    }
-
-    bool isOccupied(int xMap, int yMap) const {
-        return this->getCell(xMap, yMap).isOccupied();
-    }
-
-    bool isFree(int xMap, int yMap) const {
-        return (this->getCell(xMap, yMap).isFree());
-    }
-
-    bool isOccupied(int index) const {
-        return (this->getCell(index).isOccupied());
-    }
-
-    bool isFree(int index) const {
-        return (this->getCell(index).isFree());
-    }
-
-    // float getObstacleThreshold() const {
-    //     _CellType temp;
-    //     temp.resetGridCell();
-    //     return grid_func_.getGridProbability(temp);
-    // }
-
-    // void setUpdateFreeFactor(float factor) {
-    //     grid_func_.setUpdateFreeFactor(factor);
-    // }
-
-    // void setUpdateOccupiedFactor(float factor) {
-    //     grid_func_.setUpdateOccupiedFactor(factor);
-    // }
+protected:
+    std::mutex* mapModifyMutex_ = nullptr;              // 地图锁，修改地图时，需要加锁避免多线程资源访问冲突。
 };
 } // namespace Estimator2D
 }
