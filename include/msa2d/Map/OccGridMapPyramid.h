@@ -83,7 +83,7 @@ protected:
     Option option_; 
     Eigen::Vector2f map_in_world_;    // 地图原点在世界坐标系下的坐标
     std::vector<OccGridMapBase*> OccGridMapContainer_; /// 不同图层的地图操作对象    层数越高  分辨率越低   
-    std::vector<sensor::LaserPointContainer> dataContainers;  /// 不同图层对应的激光数据
+    // std::vector<sensor::LaserPointContainer> dataContainers;  /// 不同图层对应的激光数据
 };
 } // namespace 
 }

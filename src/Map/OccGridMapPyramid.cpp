@@ -19,22 +19,27 @@ namespace msa2d {
 namespace map {
 
 OccGridMapPyramid::OccGridMapPyramid(const Option& option) : option_(option) {
-    LOG(INFO) << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" << option.bottom_resolution 
+    std::cout << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" << option.bottom_resolution 
      << ", 底层地图的尺寸 X：" << option.map_sizeX  << ", Y: " <<  option.map_sizeY 
      << ", 金字塔层数：" << option.num_depth << ",距离边界的最小距离：" << option.min_distance_to_boundary
-     << ", 栅格的更新方法：" << option.grid_update_method;
+     << ", 栅格的更新方法：" << option.grid_update_method  << std::endl;
+    // LOG(INFO) << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" << option.bottom_resolution 
+    //  << ", 底层地图的尺寸 X：" << option.map_sizeX  << ", Y: " <<  option.map_sizeY 
+    //  << ", 金字塔层数：" << option.num_depth << ",距离边界的最小距离：" << option.min_distance_to_boundary
+    //  << ", 栅格的更新方法：" << option.grid_update_method;
+
     Eigen::Vector2i map_grid_size(option.map_sizeX / option.bottom_resolution , 
         option.map_sizeY / option.bottom_resolution ); // 第一层地图栅格size
     // 地图原点在世界坐标系下的坐标
-    map_in_world_.x() = - option.map_sizeX * 0.5;  
-    map_in_world_.y() = - option.map_sizeY * 0.5;  
+    map_in_world_.x() = - option.map_sizeX  *  0.5;  
+    map_in_world_.y() = - option.map_sizeY  * 0.5;  
     float mapResolution = option.bottom_resolution;
 
     for (unsigned int i = 0; i < option.num_depth; ++i) {
         std::cout << "map layer: " << i << ", cellLength: " << mapResolution
         << " length:" << map_grid_size.x() << " ,width: " << map_grid_size.y() << "\n";
         /** 创建占用栅格地图 **/
-        OccGridMapBase* occ_grid_map;
+        OccGridMapBase* occ_grid_map = nullptr;
 
         if (option.grid_update_method == "cnt") {
             occ_grid_map = new OccGridMapImpl<OccGridCnt>(mapResolution, map_grid_size, 
@@ -49,9 +54,6 @@ OccGridMapPyramid::OccGridMapPyramid(const Option& option) : option_(option) {
         map_grid_size /= 2;       // 地图格子行、列格子数减半
         mapResolution *= 2.0f; // 地图精度减半
     }
-    // 输入的激光数据即对应首层地图,第一层的激光数据无需记录到dataContainers中，因此数据容器大小 = 金字塔层数 - 1 = 地图容器大小 - 1 。
-    // dataContainers[i]对应mapContainer[i+1], 输入的数据dataContainer 对应 OccGridMapContainer_[0]
-    dataContainers.resize(option.num_depth - 1);
 }
 
 OccGridMapPyramid::~OccGridMapPyramid() {

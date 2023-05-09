@@ -20,7 +20,7 @@ namespace map {
 template<typename _OccGridType>
 class OccGridMapImpl : public OccGridMapBase {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     /**
      * @param map_resolution 地图的分辨率 
      * @param size 地图的栅格size   

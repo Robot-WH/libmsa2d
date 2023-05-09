@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(libmsa2d)
 
 set(CMAKE_CXX_STANDARD 17)
+# set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
 find_package(Ceres REQUIRED)
@@ -50,5 +52,17 @@ target_link_libraries(scan_matcher_lib PUBLIC
     ${PCL_LIBRARYS}
     glog::glog
 )
+
+  #############
+  ## INSTALL ##
+  #############
+
+install(TARGETS map_lib scan_matcher_lib
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .a
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .so
+)
+
+install(DIRECTORY include/msa2d
+DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION})
 
 
