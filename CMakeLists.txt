@@ -53,9 +53,9 @@ target_link_libraries(scan_matcher_lib PUBLIC
     glog::glog
 )
 
-  #############
-  ## INSTALL ##
-  #############
+#############
+## INSTALL ##
+#############
 
 install(TARGETS map_lib scan_matcher_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .a

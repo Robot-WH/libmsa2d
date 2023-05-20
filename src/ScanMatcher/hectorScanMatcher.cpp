@@ -45,7 +45,7 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimat
             estimateTransformationGN(estimate, grid_map, dataContainer);
         }
         // 角度正则化
-        estimate[2] = convert::normalize_angle(estimate[2]);
+        convert::NormAngle(estimate[2]);
         covMatrix = Eigen::Matrix3f::Zero();
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0).inverse());
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0));
@@ -90,7 +90,7 @@ bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
     return false;
 }
 
-void hectorScanMatcher::updateEstimatedPose(Eigen::Vector3f &estimate, const Eigen::Vector3f &change) {
+void hectorScanMatcher::updateEstimatedPose(Eigen::Vector3f& estimate, const Eigen::Vector3f& change) {
     estimate += change;
 }
 
