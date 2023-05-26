@@ -23,10 +23,6 @@ OccGridMapPyramid::OccGridMapPyramid(const Option& option) : option_(option) {
      << ", 底层地图的尺寸 X：" << option.map_sizeX  << ", Y: " <<  option.map_sizeY 
      << ", 金字塔层数：" << option.num_depth << ",距离边界的最小距离：" << option.min_distance_to_boundary
      << ", 栅格的更新方法：" << option.grid_update_method  << std::endl;
-    // LOG(INFO) << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" << option.bottom_resolution 
-    //  << ", 底层地图的尺寸 X：" << option.map_sizeX  << ", Y: " <<  option.map_sizeY 
-    //  << ", 金字塔层数：" << option.num_depth << ",距离边界的最小距离：" << option.min_distance_to_boundary
-    //  << ", 栅格的更新方法：" << option.grid_update_method;
 
     Eigen::Vector2i map_grid_size(option.map_sizeX / option.bottom_resolution , 
         option.map_sizeY / option.bottom_resolution ); // 第一层地图栅格size

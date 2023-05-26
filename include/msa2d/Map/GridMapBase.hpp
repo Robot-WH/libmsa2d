@@ -11,7 +11,6 @@
 #pragma once 
 
 #include <Eigen/Geometry>
-#include <Eigen/LU>
 
 namespace msa2d {
 namespace map {
@@ -22,8 +21,6 @@ namespace map {
  */
 class GridMapBase {
 public:
-    // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     /**
      * @brief 
      * @tparam _GridCellParam grid的构造参数  
@@ -100,10 +97,14 @@ public:
         return Eigen::Vector3f(mapCoords[0], mapCoords[1], worldPose[2]);
     }
 
+    /**
+     * @brief Set the Map Transformation object 获取GridMap坐标系到世界坐标系变换关系
+     * @details map -> world , 先进行尺度变换，然后执行平移变换
+     * @param map_in_world 
+     */
     void setMapTransformation(const Eigen::Vector2f& map_in_world) {
-        worldTmap_ = Eigen::AlignedScaling2f(map_info_.grid_resolution, map_info_.grid_resolution) 
-                                        * Eigen::Translation2f(map_in_world[0] / map_info_.grid_resolution, 
-                                                                                    map_in_world[1] / map_info_.grid_resolution);
+        worldTmap_ = Eigen::Translation2f(map_in_world[0], map_in_world[1]) *
+                                            Eigen::AlignedScaling2f(map_info_.grid_resolution, map_info_.grid_resolution); 
         mapTworld_ = worldTmap_.inverse();
     }
 

@@ -23,8 +23,6 @@ namespace map {
 template <typename _CellType>
 class GridMapImpl : public GridMapBase {
 public:
-    // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     /**
      * @brief 
      * @tparam _GridCellParam grid的构造参数  

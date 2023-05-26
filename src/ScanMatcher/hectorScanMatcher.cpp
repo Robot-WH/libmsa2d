@@ -147,14 +147,14 @@ Eigen::Vector3f hectorScanMatcher::interpMapValueWithDerivatives(const map::OccG
     if (grid_map->getGridMapBase().pointOutOfMapBounds(coords)) {
         return Eigen::Vector3f(0.0f, 0.0f, 0.0f);
     }
-    // 对坐标进行向下取整，即得到坐标(x0,y0)
-    Eigen::Vector2i indMin(coords.cast<int>());
-    // 得到双线性插值的因子
-    Eigen::Vector2f factors(coords - indMin.cast<float>());
+    // 更具当前点的位置选择00点栅格
+    Eigen::Vector2i center_ind(coords[0] - 0.5f, coords[1] - 0.5f);
+    Eigen::Vector2f center_pos = center_ind.cast<float>() + Eigen::Vector2f(0.5f, 0.5f);     // 与栅格的中心匹配
+    Eigen::Vector2f factors(coords - center_pos);// 得到双线性插值的因子
     // 获得地图的X方向最大边界
     int sizeX = grid_map->getGridMapBase().getSizeX();
     // 计算(x0, y0)点的网格索引值
-    int index = indMin[1] * sizeX + indMin[0]; 
+    int index = center_ind[1] * sizeX + center_ind[0]; 
     Eigen::Vector4f intensities; /// 记录附近的四个格点的占据概率值
     // 下边这取4个点的栅格值，感觉就是导致hector大地图后计算变慢的原因
     /** 首先判断cache中该地图点在本次scan中是否被访问过，若有则直接取值；没有则立马计算概率值并更新到cache **/
@@ -181,8 +181,6 @@ Eigen::Vector3f hectorScanMatcher::interpMapValueWithDerivatives(const map::OccG
             ((intensities[2] * xFacInv + intensities[3] * factors[0]) * (factors[1])),
         -((dx1 * yFacInv) + (dx2 * factors[1])),
         -((dy1 * xFacInv) + (dy2 * factors[0]))
-        // -((dx1 * xFacInv) + (dx2 * factors[0])), // 改为： -((dx1 * yFacInv) + (dx2 * factors[1]))
-        // -((dy1 * yFacInv) + (dy2 * factors[1]))  // 改为： -((dy1 * xFacInv) + (dy2 * factors[0]))
     );
 }
 }

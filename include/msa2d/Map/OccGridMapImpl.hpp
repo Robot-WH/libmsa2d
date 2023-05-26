@@ -20,7 +20,6 @@ namespace map {
 template<typename _OccGridType>
 class OccGridMapImpl : public OccGridMapBase {
 public:
-    // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     /**
      * @param map_resolution 地图的分辨率 
      * @param size 地图的栅格size   
@@ -96,14 +95,14 @@ public:
         Eigen::Isometry2f poseTransform(
             Eigen::Translation2f(mapPose[0], mapPose[1]) * Eigen::Rotation2Df(mapPose[2]));
         Eigen::Vector2f scanBeginMapf(poseTransform * Eigen::Vector2f{0, 0});    // T(map<-laser) * t(laser) = t(map)
-        // 栅格坐标是整型  因此四舍五入   地图的原点建立在grid的中间
-        Eigen::Vector2i scanBeginMapi(scanBeginMapf[0] + 0.5f, scanBeginMapf[1] + 0.5f);
+        // 当前帧起始的位置
+        Eigen::Vector2i scanBeginMapi(scanBeginMapf[0], scanBeginMapf[1]);
         int numValidElems = laser_same_scale.size();
-        // std::cout << " num: " << numValidElems << "\n";
+
         for (int i = 0; i < numValidElems; ++i) {
             //Get map coordinates of current beam endpoint    laser_same_scale 中的激光数据已经转换到了base坐标
             Eigen::Vector2f scanEndMapf(poseTransform * laser_same_scale[i]);
-            Eigen::Vector2i scanEndMapi(scanEndMapf[0] + 0.5f, scanEndMapf[1] + 0.5f);
+            Eigen::Vector2i scanEndMapi(scanEndMapf[0], scanEndMapf[1]);
       
             if (scanBeginMapi != scanEndMapi) {
                 updateLineBresenhami(scanBeginMapi, scanEndMapi, grid_update_marksheet);
