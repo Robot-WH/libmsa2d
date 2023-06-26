@@ -284,7 +284,7 @@ bool FastCorrelativeScanMatcher2D::Match(
   // param: linear_search_window angular_search_window 
   const SearchParameters search_parameters(options_.linear_search_window_, // 7
                                            options_.angular_search_window_, // 30
-                                           point_cloud, map_resolution_);
+                                           point_cloud, map_resolution_, options_.first_layer_resolution_);
   // 带入搜索参数进行搜粟，搜索中心为先验位姿
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
                                    point_cloud, min_score, score,
@@ -308,7 +308,8 @@ bool FastCorrelativeScanMatcher2D::MatchFullSubmap(
       1e6 * map_resolution_,  // Linear search window, 1e6 cells/direction.
       M_PI,  // Angular search window, 180 degrees in both directions.
       point_cloud, 
-      map_resolution_);
+      map_resolution_, 
+      options_.first_layer_resolution_);
   // 计算搜索窗口的中点 把这个中点作为搜索的起点
   const Eigen::Vector2i&  map_world_size = grid_map_->getGridMapBase().getMapGridSize();  
   const Pose2d center = Pose2d(map_world_size.x() / 2, map_world_size.y() / 2, 0);

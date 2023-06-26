@@ -10,12 +10,13 @@ namespace ScanMatcher {
  * @param linear_search_window 单边平移搜索空间大小  单位m
  * @param angular_search_window  单边角度搜索空间大小  
  * @param point_cloud 
- * @param resolution 
+ * @param resolution 栅格地图的分辨率
+ * @param expansion_coeff 实际匹配地图金字塔最低层的膨胀系数 (实际分辨率 = resolution * expansion_coeff)
  */
 SearchParameters::SearchParameters(const double linear_search_window,
                                    const double angular_search_window,
                                    const sensor::LaserPointCloud& point_cloud,
-                                   const double resolution) : resolution_(resolution) {
+                                   const double resolution, const int& expansion_coeff) : resolution_(resolution) {
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution;
@@ -28,12 +29,11 @@ SearchParameters::SearchParameters(const double linear_search_window,
 
   // 根据论文里的公式 求得角度分辨率 angular_perturbation_step_size
   /**
-   * @todo 这个角度增量感觉有问题  
-   * 
+   * @details 这个角度增量通过余弦定理计算
    */
-  const double kSafetyMargin = 1. - 1e-3;
+  const double kSafetyMargin = 1. - 1e-3;   // 缩小一点的系数  
   angular_perturbation_step_ =
-      kSafetyMargin * std::acos(1. - math::Pow2(resolution_) /
+      kSafetyMargin * std::acos(1. - math::Pow2(resolution_ * expansion_coeff) /
                                          (2. * math::Pow2(max_scan_range)));
 
   // 范围除以分辨率得到个数

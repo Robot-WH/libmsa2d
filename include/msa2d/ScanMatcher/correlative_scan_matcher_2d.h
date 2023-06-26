@@ -25,11 +25,7 @@ struct SearchParameters {
   };
 
   SearchParameters(double linear_search_window, double angular_search_window,
-                   const sensor::LaserPointCloud& point_cloud, double resolution);
-
-  // For testing.
-  SearchParameters(int num_linear_perturbations, int num_angular_perturbations,
-                   double angular_perturbation_step_size, double resolution);
+                   const sensor::LaserPointCloud& point_cloud, double resolution, const int& expansion_coeff);
 
   // Tightens the search window as much as possible.
   bool ShrinkToFit(const LinearBounds& map_bounds,
