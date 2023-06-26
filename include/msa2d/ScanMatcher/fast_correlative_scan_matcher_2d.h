@@ -105,11 +105,11 @@ public:
   const SearchParameters::LinearBounds& GetValidGridMapRange() const;  
 
   int max_depth() const { return precomputation_grids_.size() - 1; }
-  const int& first_layer_resolution() const {
-    return first_layer_resolution_;
-  }
+  const int& max_resolution() const { return max_resolution_; }
+  const int& min_resolution() const { return min_resolution_;}
 private:
-  int first_layer_resolution_;  
+  int min_resolution_;  
+  int max_resolution_;  
   SearchParameters::LinearBounds valid_grid_range_{9999, 0, 9999, 0};  // 有效栅格的范围  
   std::vector<PrecomputationGrid2D> precomputation_grids_;
 };
@@ -158,7 +158,7 @@ class FastCorrelativeScanMatcher2D {
   Candidate2D BranchAndBound(const std::vector<DiscreteScan2D>& discrete_scans,
                              const SearchParameters& search_parameters,
                              const std::vector<Candidate2D>& candidates,
-                             int candidate_depth, float min_score) const;
+                             int candidate_depth, const int& candidate_resolution, float min_score) const;
 
   const FastCorrelativeScanMatcherOptions2D options_;
   const float map_resolution_;

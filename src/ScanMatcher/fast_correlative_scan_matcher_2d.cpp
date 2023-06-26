@@ -198,14 +198,16 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
     CHECK_GE(options.branch_and_bound_depth_, 1);
     // 1 2 4 8 16 32 64 
     // param: branch_and_bound_depth 默认为7, 确定 最大的分辨率, 也就是64个栅格合成一个格子
+    min_resolution_ = options.first_layer_resolution_;
+    max_resolution_ = min_resolution_ * (1 << (options.branch_and_bound_depth_ - 1));
+
     precomputation_grids_.reserve(options.branch_and_bound_depth_);
     time::TicToc tt;
     // 分辨率逐渐变大, i = 0时就是默认分辨率0.05, i=6时, width=64,也就是64个格子合成一个值
     for (int i = 0; i != options.branch_and_bound_depth_; ++i) {
     // for (int i = 0; i < 2; ++i) {
       // time::TicToc tt;
-      const int width = options.first_layer_resolution_ * (1 << i);
-      std::cout << "width: " << width << std::endl;
+      const int width = min_resolution_ * (1 << i);
       // 构造不同分辨率的地图 PrecomputationGrid2D
       precomputation_grids_.emplace_back(grid_map, width);
       // 如果是原始地图，计算有效栅格覆盖的范围
@@ -357,7 +359,9 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     // Step: 进行基于分支定界算法的搜索, 获取最优解
     const Candidate2D best_candidate = BranchAndBound(
         discrete_scans, search_parameters, lowest_resolution_candidates,
-        precomputation_grid_stack_->max_depth(), min_score); // param: max_depth
+        precomputation_grid_stack_->max_depth(), precomputation_grid_stack_->max_resolution(),
+        min_score); // param: max_depth
+
     tt.toc("BranchAndBound ");
     std::cout << "best_candidate.score: " << best_candidate.score << std::endl;
     // std::cout << "best_candidate.x: " << best_candidate.x << std::endl;
@@ -407,7 +411,7 @@ std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
   // 分辨率     深度若为7, 那么 2^6 = 64
-  const int linear_step_size = 1 << precomputation_grid_stack_->max_depth();   // 1 << x, 即 2^(x-1)
+  const int linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
   int num_candidates = 0;
   // 遍历旋转后的每个点云     num_scans 即旋转点云的数量
   for (int scan_index = 0; scan_index != search_parameters.rotated_scans_num_;
@@ -508,13 +512,16 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
  * @param[in] search_parameters 搜索配置参数
  * @param[in] candidates 候选解
  * @param[in] candidate_depth 搜索树高度
+ * @param[in] candidate_resolution 当前层的分辨率   
  * @param[in] min_score 候选点最小得分
  * @return Candidate2D 最优解
  */
 Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
       const std::vector<DiscreteScan2D>& discrete_scans,
       const SearchParameters& search_parameters,
-      const std::vector<Candidate2D>& candidates, const int candidate_depth,
+      const std::vector<Candidate2D>& candidates, 
+      const int candidate_depth,
+      const int& candidate_resolution, 
       float min_score) const {
 
   // 这个函数是以递归调用的方式求解的
@@ -540,7 +547,7 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
     // 到这里说明 上界高与当前最优解，那么有可能这个枝存在得分高与最优的匹配得分的叶子，接下来需要对其进行分枝
     std::vector<Candidate2D> higher_resolution_candidates;
     // 搜索步长减为上层的一半
-    const int half_width = 1 << (candidate_depth - 1);
+    const int half_width = candidate_resolution / 2;
 
     // Step: 分枝 对x、y偏移进行遍历, 求出candidate的四个子节点候选解
     for (int x_offset : {0, half_width}) { // 只能取0和half_width
@@ -578,8 +585,8 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
     best_high_resolution_candidate = std::max(
         best_high_resolution_candidate,
         BranchAndBound(discrete_scans, search_parameters,
-                       higher_resolution_candidates, candidate_depth - 1,
-                       best_high_resolution_candidate.score));
+          higher_resolution_candidates, candidate_depth - 1, candidate_resolution / 2,
+          best_high_resolution_candidate.score));
   }
 
   return best_high_resolution_candidate;
