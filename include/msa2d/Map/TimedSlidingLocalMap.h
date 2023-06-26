@@ -3,7 +3,7 @@
 #include <deque>
 #include <mutex>
 #include <nabo/nabo.h>
-#include "../Sensor/SensorData.hpp"
+#include "../Sensor/point_cloud.hpp"
 
 namespace msa2d {
 namespace map {

@@ -25,6 +25,17 @@ set(MSALib_INCLUDE_DIR ${catkin_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/inclu
 # list(APPEND MSAL3D_INCLUDE_DIR ${catkin_INCLUDE_DIRS})
 message("MSALib_INCLUDE_DIR: " ${MSALib_INCLUDE_DIR})
 
+# file(GLOB_RECURSE common CONFIGURE_DEPENDS src/Sensor/*.cpp) 
+# add_library(common_lib SHARED ${common})
+# target_include_directories(common_lib PUBLIC 
+#     include
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${GLOG_INCLUDE_DIRS}
+# )
+# target_link_libraries(common_lib PUBLIC 
+#     glog::glog
+# )
+
 file(GLOB_RECURSE map_src CONFIGURE_DEPENDS src/Map/*.cpp) 
 add_library(map_lib SHARED ${map_src})
 target_include_directories(map_lib PUBLIC 
@@ -35,6 +46,7 @@ target_include_directories(map_lib PUBLIC
 )
 target_link_libraries(map_lib PUBLIC 
     glog::glog
+    # common_lib
     libnabo::nabo
 )
 
@@ -47,10 +59,18 @@ target_include_directories(scan_matcher_lib PUBLIC
     ${EIGEN3_INCLUDE_DIR}
     ${GLOG_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 target_link_libraries(scan_matcher_lib PUBLIC 
     ${PCL_LIBRARYS}
+    ${OpenCV_LIBS}
     glog::glog
+    # common_lib
+)
+
+add_executable(test_csm_grid src/test/test_csm_grid.cpp)
+target_link_libraries(test_csm_grid
+    scan_matcher_lib
 )
 
 #############

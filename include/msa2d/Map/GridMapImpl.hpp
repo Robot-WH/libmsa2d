@@ -45,7 +45,7 @@ public:
     GridMapImpl(const GridMapImpl& other) : GridMapBase(other) {
         /** 创建一个新的Map array，拷贝原来的数据 **/
         // 先构造内存空间
-        auto size = getMapGridSize();
+        auto size = getMapAllGridNum();
         mapArray_ = new _CellType[size];
         // 将数据复制   深拷贝 
         for (int i = 0; i < size; ++i) {
@@ -67,7 +67,7 @@ public:
                 rebuildMap(other.map_info_.map_grid_size);
             }
             // 将mapArray_数据复制   
-            auto size = this->getMapGridSize();
+            auto size = getMapAllGridNum();
             for (int i = 0; i < size; ++i) {
                 mapArray_[i] = other.mapArray_[i];   // 拷贝赋值  
             }
@@ -90,7 +90,7 @@ public:
      * @return _CellType* 
      */
     virtual _CellType* createSameSizeMap() {
-        _CellType* mapArray = new _CellType[getMapGridSize()];
+        _CellType* mapArray = new _CellType[getMapAllGridNum()];
         return mapArray; 
     }
 
@@ -121,7 +121,7 @@ public:
      * 
      */
     void clear() {
-        int size = this->getMapGridSize();
+        int size = getMapAllGridNum();
 
         for (int i = 0; i < size; ++i) {
             mapArray_[i].resetGridCell();
@@ -271,23 +271,23 @@ public:
      * @brief: 将当前GridMap的坐标原点移动到new_map_pos_in_world
      */    
     void moveTo(const Eigen::Vector2f& new_map_pos_in_world) override {
-        Eigen::Vector2i pos_in_prev_map = getMapCoords(new_map_pos_in_world).cast<int>();  
+        Eigen::Vector2i pos_in_prev_map = PosWorldToMapf(new_map_pos_in_world).cast<int>();  
         auto new_map = createSameSizeMap(); 
         // 遍历原Map的每一个Grid
-        for (uint16_t i = 0; i < getSizeX(); ++i) {
-            for (uint16_t j = 0; j < getSizeY(); ++j) {
+        for (uint16_t i = 0; i < getGridSizeX(); ++i) {
+            for (uint16_t j = 0; j < getGridSizeY(); ++j) {
                 // 计算该Grid在移动后的地图的Grid坐标
                 Eigen::Vector2i new_grid_pos{i - pos_in_prev_map[0], j - pos_in_prev_map[1]};
                 // 是否在该地图范围内
                 if (!pointOutOfMapBounds(new_grid_pos)) {
-                    new_map[new_grid_pos[1] * getSizeX() + new_grid_pos[0]] = getCell(i, j);
+                    new_map[new_grid_pos[1] * getGridSizeX() + new_grid_pos[0]] = getCell(i, j);
                 }
             }
         }
         resetArray(new_map);   // 将 mapArray_  指向 new_map 
         // 对新地图原点在旧地图的坐标进行了取整   使得新地图与旧地图的栅格完全重合
         Eigen::Vector2f new_map_adjust_pos_in_world = 
-            getWorldCoords(Eigen::Vector2f{pos_in_prev_map[0], pos_in_prev_map[1]});  
+            PosMapToWorldf(Eigen::Vector2f{pos_in_prev_map[0], pos_in_prev_map[1]});  
         setMapTransformation(new_map_adjust_pos_in_world); 
     }
 

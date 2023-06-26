@@ -29,7 +29,8 @@ public:
     virtual void updateSetOccupied(int index) = 0;
     virtual void updateSetFree(int index) = 0;
     virtual void updateUnsetFree(int index) = 0; 
-    virtual float getGridProbability(int index) const = 0;
+    virtual const float& getGridProbability(const int& index) = 0;
+    virtual const float& getGridProbability(const int& xMap, const int& yMap) = 0;
     virtual bool isOccupied(int xMap, int yMap) const = 0;
     virtual bool isFree(int xMap, int yMap) const = 0;
     virtual bool isOccupied(int index) const = 0; 

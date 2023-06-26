@@ -22,12 +22,12 @@ class OccGridMapImpl : public OccGridMapBase {
 public:
     /**
      * @param map_resolution 地图的分辨率 
-     * @param size 地图的栅格size   
+     * @param grid_size 地图的栅格size   
      * @param map_in_world map坐标系原点在world坐标系的坐标
      */    
-    OccGridMapImpl(float map_resolution, const Eigen::Vector2i& size, 
+    OccGridMapImpl(float map_resolution, const Eigen::Vector2i& grid_size, 
                                         const Eigen::Vector2f& map_in_world)
-        : occ_grid_map_(map_resolution, size, map_in_world),
+        : occ_grid_map_(map_resolution, grid_size, map_in_world),
             grid_occ_mark_(2), grid_free_mark_(1)  {}
 
     virtual ~OccGridMapImpl() {}
@@ -44,8 +44,12 @@ public:
         occ_grid_map_.getCell(index).updateUnsetFree();
     }
 
-    float getGridProbability(int index) const override {
+    const float& getGridProbability(const int& index) override {
         return occ_grid_map_.getCell(index).getGridProbability();
+    }
+
+    const float& getGridProbability(const int& xMap, const int& yMap) override {
+        return occ_grid_map_.getCell(xMap, yMap).getGridProbability();
     }
 
     bool isOccupied(int xMap, int yMap) const override {
@@ -89,9 +93,9 @@ public:
             const Eigen::Vector3f& scan_pose_in_world) override {
         mapModifyMutex_->lock(); //加锁，禁止其他线程竞争地图资源
         /// 更新地图
-        std::vector<uint8_t> grid_update_marksheet(occ_grid_map_.getMapGridSize(), 0);     // 为了保证 每一个grid只被更新一次，因此设置一个mark
+        std::vector<uint8_t> grid_update_marksheet(occ_grid_map_.getMapAllGridNum(), 0);     // 为了保证 每一个grid只被更新一次，因此设置一个mark
         // 世界坐标转换到该栅格坐标   robot -> grid map
-        Eigen::Vector3f mapPose(occ_grid_map_.getMapCoordsPose(scan_pose_in_world));
+        Eigen::Vector3f mapPose(occ_grid_map_.PoseWorldToMap(scan_pose_in_world));
         Eigen::Isometry2f poseTransform(
             Eigen::Translation2f(mapPose[0], mapPose[1]) * Eigen::Rotation2Df(mapPose[2]));
         Eigen::Vector2f scanBeginMapf(poseTransform * Eigen::Vector2f{0, 0});    // T(map<-laser) * t(laser) = t(map)
@@ -112,6 +116,7 @@ public:
         occ_grid_map_.setUpdated();
         mapModifyMutex_->unlock(); //地图解锁
     }
+
 protected:
     /**
      * @brief: Bresenhami画线算法更新map
@@ -129,7 +134,7 @@ protected:
         int y0 = beginMap[1];
 
         //check if beam start point is inside map, cancel update if this is not the case
-        if ((x0 < 0) || (x0 >= occ_grid_map_.getSizeX()) || (y0 < 0) || (y0 >= occ_grid_map_.getSizeY())) {
+        if ((x0 < 0) || (x0 >= occ_grid_map_.getGridSizeX()) || (y0 < 0) || (y0 >= occ_grid_map_.getGridSizeY())) {
             return;
         }
 
@@ -137,7 +142,7 @@ protected:
         int y1 = endMap[1];
 
         //check if beam end point is inside map, cancel update if this is not the case
-        if ((x1 < 0) || (x1 >= occ_grid_map_.getSizeX()) || (y1 < 0) || (y1 >= occ_grid_map_.getSizeY())) {
+        if ((x1 < 0) || (x1 >= occ_grid_map_.getGridSizeX()) || (y1 < 0) || (y1 >= occ_grid_map_.getGridSizeY())) {
             return;
         }
 
@@ -148,9 +153,9 @@ protected:
         unsigned int abs_dy = abs(dy);
 
         int offset_dx = math::sign(dx);
-        int offset_dy = math::sign(dy) * occ_grid_map_.getSizeX();    
+        int offset_dy = math::sign(dy) * occ_grid_map_.getGridSizeX();    
 
-        unsigned int startOffset = beginMap.y() * occ_grid_map_.getSizeX() + beginMap.x();
+        unsigned int startOffset = beginMap.y() * occ_grid_map_.getGridSizeX() + beginMap.x();
 
         //if x is dominant
         if (abs_dx >= abs_dy) {
@@ -162,7 +167,7 @@ protected:
             bresenham2D(abs_dy, abs_dx, error_x, offset_dy, offset_dx, startOffset, grid_update_marksheet);
         }
         // 将终点单独拿出来，设置占用
-        unsigned int endOffset = endMap.y() * occ_grid_map_.getSizeX() + endMap.x();
+        unsigned int endOffset = endMap.y() * occ_grid_map_.getGridSizeX() + endMap.x();
         bresenhamCellOcc(endOffset, grid_update_marksheet);
     }
 

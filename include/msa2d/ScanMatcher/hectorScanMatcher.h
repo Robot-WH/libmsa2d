@@ -46,7 +46,7 @@ private:
      * @return
      */
     Eigen::Vector3f matchData(const Eigen::Vector3f& beginEstimateWorld, 
-                                                            const map::OccGridMapBase* grid_map, 
+                                                            map::OccGridMapBase* grid_map, 
                                                             const sensor::LaserPointContainer& dataContainer, 
                                                             Eigen::Matrix3f& covMatrix, 
                                                             int maxIterations);
@@ -60,7 +60,7 @@ protected:
      * @return  提示是否有解　－－－　貌似没用上
     */
     bool estimateTransformationGN(Eigen::Vector3f& estimate,
-                                                                        const map::OccGridMapBase* grid_map,
+                                                                        map::OccGridMapBase* grid_map,
                                                                         const sensor::LaserPointContainer& dataPoints);
 
     void updateEstimatedPose(Eigen::Vector3f &estimate, const Eigen::Vector3f &change);
@@ -74,7 +74,7 @@ protected:
      * @param dTr  需要计算的 g列向量
      */
     void getCompleteHessianDerivs(const Eigen::Vector3f& pose,
-                                                                        const map::OccGridMapBase* grid_map,
+                                                                        map::OccGridMapBase* grid_map,
                                                                         const sensor::LaserPointContainer& dataPoints,
                                                                         Eigen::Matrix3f& H,
                                                                         Eigen::Vector3f& dTr);
@@ -84,7 +84,7 @@ protected:
      * @param coords  激光点地图坐标
      * @return ret(0) 是网格值 ， ret(1) 是栅格值在x方向的导数 ， ret(2)是栅格值在y方向的导数
      */
-    Eigen::Vector3f interpMapValueWithDerivatives(const map::OccGridMapBase* grid_map, 
+    Eigen::Vector3f interpMapValueWithDerivatives(map::OccGridMapBase* grid_map, 
                                                                                                         const Eigen::Vector2f& coords);
 
 protected:

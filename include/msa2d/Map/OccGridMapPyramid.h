@@ -43,7 +43,7 @@ public:
 
     int getMapLevels() const;                       // 获取地图总层数
 
-    const OccGridMapBase* getGridMap(int mapLevel) const;// 获取指定层的地图
+    OccGridMapBase* getGridMap(int mapLevel);// 获取指定层的地图
 
     /// 获取指定层的地图锁
     std::mutex* getMapMutex(int i);

@@ -28,14 +28,14 @@ Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& beginEstimateWor
 }
 
 Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimateWorld, 
-                                                                                                    const map::OccGridMapBase* grid_map, 
+                                                                                                    map::OccGridMapBase* grid_map, 
                                                                                                     const sensor::LaserPointContainer& dataContainer, 
                                                                                                     Eigen::Matrix3f& covMatrix, 
                                                                                                     int maxIterations) {
     // 第一帧时，dataContainer为空 因此不会进行匹配                                                      
     if (dataContainer.getSize() != 0) {
         // beginEstimateWorld 为相对于世界坐标系的位姿 ，这里将世界坐标系的位姿转换为相对于当前OccMap的
-        Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().getMapCoordsPose(beginEstimateWorld));
+        Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().PoseWorldToMap(beginEstimateWorld));
         Eigen::Vector3f estimate(beginEstimateMap);
         // 2. 第一次迭代
         estimateTransformationGN(estimate, grid_map, dataContainer);
@@ -52,7 +52,7 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimat
         // 使用Hessian矩阵近似协方差矩阵
         covMatrix = H;
         // 结果转换回物理坐标系下 -- 转换回实际尺度
-        return grid_map->getGridMapBase().getWorldCoordsPose(estimate);
+        return grid_map->getGridMapBase().PoseMapToWorld(estimate);
     }
     return beginEstimateWorld;
 }
@@ -65,7 +65,7 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimat
  * @return  提示是否有解　－－－　貌似没用上
 */
 bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
-                                                                                                                const map::OccGridMapBase* grid_map,
+                                                                                                                map::OccGridMapBase* grid_map,
                                                                                                                 const sensor::LaserPointContainer& dataPoints) {
     /** 核心函数，计算H矩阵和dTr向量(ｂ列向量)---- occGridMapUtil.h 中 **/
     getCompleteHessianDerivs(estimate, grid_map, dataPoints, H, dTr);
@@ -95,7 +95,7 @@ void hectorScanMatcher::updateEstimatedPose(Eigen::Vector3f& estimate, const Eig
 }
 
 void hectorScanMatcher::getCompleteHessianDerivs(const Eigen::Vector3f& pose,
-                                                                                                                const map::OccGridMapBase* grid_map,
+                                                                                                                map::OccGridMapBase* grid_map,
                                                                                                                 const sensor::LaserPointContainer& dataPoints,
                                                                                                                 Eigen::Matrix3f& H,
                                                                                                                 Eigen::Vector3f& dTr) {
@@ -141,7 +141,7 @@ void hectorScanMatcher::getCompleteHessianDerivs(const Eigen::Vector3f& pose,
     H(2, 1) = H(1, 2);
 }
 
-Eigen::Vector3f hectorScanMatcher::interpMapValueWithDerivatives(const map::OccGridMapBase* grid_map, 
+Eigen::Vector3f hectorScanMatcher::interpMapValueWithDerivatives(map::OccGridMapBase* grid_map, 
                                                                                                                                                 const Eigen::Vector2f& coords) {
     // 检查coords坐标是否是在地图坐标范围内
     if (grid_map->getGridMapBase().pointOutOfMapBounds(coords)) {
@@ -152,7 +152,7 @@ Eigen::Vector3f hectorScanMatcher::interpMapValueWithDerivatives(const map::OccG
     Eigen::Vector2f center_pos = center_ind.cast<float>() + Eigen::Vector2f(0.5f, 0.5f);     // 与栅格的中心匹配
     Eigen::Vector2f factors(coords - center_pos);// 得到双线性插值的因子
     // 获得地图的X方向最大边界
-    int sizeX = grid_map->getGridMapBase().getSizeX();
+    int sizeX = grid_map->getGridMapBase().getGridSizeX();
     // 计算(x0, y0)点的网格索引值
     int index = center_ind[1] * sizeX + center_ind[0]; 
     Eigen::Vector4f intensities; /// 记录附近的四个格点的占据概率值

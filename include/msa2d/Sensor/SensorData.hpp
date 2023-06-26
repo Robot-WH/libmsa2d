@@ -24,21 +24,5 @@ struct WheelOdom {
     Pose2d pose_; 
 };
 
-struct LaserPoint {
-    double rel_time_;  // 相对第一个点的时间戳  
-    Eigen::Vector2f pos_;  // x, y 
-    float range_; 
-    uint16_t index_;  
-};
-
-struct LaserPointCloud {
-    using ptr = std::unique_ptr<LaserPointCloud>; 
-    using Ptr = std::shared_ptr<LaserPointCloud>; 
-    double start_time_;    
-    double end_time_;    
-    double scan_period_;   // 一帧的总时间
-    std::vector<LaserPoint> pointcloud_;
-};
-
 }
 }

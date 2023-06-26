@@ -27,6 +27,8 @@ public:
      */
     OccGridLogOdd() {
         logOddsVal = 0.0f;  
+        prob_update_ = true;   // 概率未知  需要更新
+        occ_prob_ = 0.5f;  
         // 设置free/占据 的栅格的对数概率 
         setUpdateFreeFactor(0.4f);   // 空闲的更新量     -0.42
         setUpdateOccupiedFactor(0.9f);   // 占据的更新量  0.41
@@ -39,6 +41,7 @@ public:
     void updateSetOccupied() {
         if (logOddsVal < 50.0f) {
             logOddsVal += logOddsOccupied;
+            prob_update_ = true;       // 该栅格概率需要更新 
         }
     }
 
@@ -48,6 +51,7 @@ public:
      */
     void updateSetFree() {
         logOddsVal += logOddsFree;
+        prob_update_ = true;       // 该栅格概率需要更新 
     }
 
     /**
@@ -56,6 +60,7 @@ public:
      */
     void updateUnsetFree() {
         logOddsVal -= logOddsFree;
+        prob_update_ = true;       // 该栅格概率需要更新 
     }
 
     /**
@@ -63,9 +68,15 @@ public:
      * 
      * @return float 
      */
-    float getGridProbability() const {
-        float odds = exp(logOddsVal);
-        return odds / (odds + 1.0f);
+    const float& getGridProbability() {
+        // 如果概率更新了那么需要重新计算概率 ，否则直接将缓存的概率值输出 
+        if (prob_update_) {
+            float odds = exp(logOddsVal);
+            occ_prob_ = odds / (odds + 1.0f);
+            prob_update_ = false;   
+        }
+
+        return occ_prob_;
     }
 
     /**
@@ -91,6 +102,7 @@ public:
    */
     void resetGridCell() {
         logOddsVal = 0.0f;
+        prob_update_ = true;       // 该栅格概率已更新 
     }
 
     void setUpdateFreeFactor(float factor) {
@@ -98,7 +110,7 @@ public:
     }
 
     void setUpdateOccupiedFactor(float factor) {
-        logOddsOccupied = probToLogOdds(factor);
+        logOddsOccupied = probToLogOdds(factor);    //  factor: 0.9    -> 2.19
     }
 
 protected:
@@ -114,6 +126,8 @@ protected:
     float logOddsVal;   ///< The log odds representation of occupancy probability.
     float logOddsOccupied; /// < The log odds representation of probability used for updating cells as occupied
     float logOddsFree;     /// < The log odds representation of probability used for updating cells as free
+    float occ_prob_;     // 占用概率   
+    bool prob_update_;  
 };
 }
 }
