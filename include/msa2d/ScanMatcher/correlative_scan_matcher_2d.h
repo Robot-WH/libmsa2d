@@ -25,7 +25,8 @@ struct SearchParameters {
   };
 
   SearchParameters(double linear_search_window, double angular_search_window,
-                   const sensor::LaserPointCloud& point_cloud, double resolution, const int& expansion_coeff);
+                   const sensor::LaserPointCloud& point_cloud, double resolution, 
+                   const int& expansion_coeff, const int& map_depth);
 
   // Tightens the search window as much as possible.
   bool ShrinkToFit(const LinearBounds& map_bounds,
@@ -36,6 +37,7 @@ struct SearchParameters {
   double resolution_;
   int rotated_scans_num_;     // 旋转后的点云集合的个数
   std::vector<LinearBounds> linear_bounds_;  // Per rotated scans.
+  std::vector<int> angular_perturbation_steps_;
 };
 
 // Generates a collection of rotated scans.

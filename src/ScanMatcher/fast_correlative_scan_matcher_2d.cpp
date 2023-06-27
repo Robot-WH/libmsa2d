@@ -202,7 +202,9 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
     max_resolution_ = min_resolution_ * (1 << (options.branch_and_bound_depth_ - 1));
 
     precomputation_grids_.reserve(options.branch_and_bound_depth_);
-    time::TicToc tt;
+    // time::TicToc tt;
+    // static float avg_time = 0; 
+    // static int N = 0; 
     // 分辨率逐渐变大, i = 0时就是默认分辨率0.05, i=6时, width=64,也就是64个格子合成一个值
     for (int i = 0; i != options.branch_and_bound_depth_; ++i) {
     // for (int i = 0; i < 2; ++i) {
@@ -211,39 +213,42 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
       // 构造不同分辨率的地图 PrecomputationGrid2D
       precomputation_grids_.emplace_back(grid_map, width);
       // 如果是原始地图，计算有效栅格覆盖的范围
-      if (i == 0) {
-        // time::TicToc tt;
-        const Eigen::Vector2i& map_grid_size = precomputation_grids_[0].GetMapGridSize(); 
+      // if (i == 0) {
+      //   // time::TicToc tt;
+      //   const Eigen::Vector2i& map_grid_size = precomputation_grids_[0].GetMapGridSize(); 
 
-        for (int row = 0; row < map_grid_size.y(); ++row) {
-          for (int col = 0; col < map_grid_size.x(); ++col) {
-            if (precomputation_grids_[0].GetValue(Eigen::Array2i(col, row)) != 128) {
-              // std::cout << "value: " << precomputation_grids_[0].GetValue(Eigen::Array2i(col, row)) << std::endl;
-              if (col < valid_grid_range_.min_x) {
-                valid_grid_range_.min_x = col;
-              } 
-              if (col > valid_grid_range_.max_x) {
-                valid_grid_range_.max_x = col;
-              }
+      //   for (int row = 0; row < map_grid_size.y(); ++row) {
+      //     for (int col = 0; col < map_grid_size.x(); ++col) {
+      //       if (precomputation_grids_[0].GetValue(Eigen::Array2i(col, row)) != 128) {
+      //         // std::cout << "value: " << precomputation_grids_[0].GetValue(Eigen::Array2i(col, row)) << std::endl;
+      //         if (col < valid_grid_range_.min_x) {
+      //           valid_grid_range_.min_x = col;
+      //         } 
+      //         if (col > valid_grid_range_.max_x) {
+      //           valid_grid_range_.max_x = col;
+      //         }
 
-              if (row < valid_grid_range_.min_y) {
-                valid_grid_range_.min_y = row;
-              } 
-              if (row > valid_grid_range_.max_y) {
-                valid_grid_range_.max_y = row;
-              }
-            }
-          }
-        }
-        // tt.toc("map range: ");
-        // std::cout << "valid_grid_range_.min_x: " << valid_grid_range_.min_x << std::endl;
-        // std::cout << "valid_grid_range_.max_x: " << valid_grid_range_.max_x << std::endl;
-        // std::cout << "valid_grid_range_.min_y: " << valid_grid_range_.min_y << std::endl;
-        // std::cout << "valid_grid_range_.max_y: " << valid_grid_range_.max_y << std::endl;
-      }
+      //         if (row < valid_grid_range_.min_y) {
+      //           valid_grid_range_.min_y = row;
+      //         } 
+      //         if (row > valid_grid_range_.max_y) {
+      //           valid_grid_range_.max_y = row;
+      //         }
+      //       }
+      //     }
+      //   }
+      //   // tt.toc("map range: ");
+      //   // std::cout << "valid_grid_range_.min_x: " << valid_grid_range_.min_x << std::endl;
+      //   // std::cout << "valid_grid_range_.max_x: " << valid_grid_range_.max_x << std::endl;
+      //   // std::cout << "valid_grid_range_.min_y: " << valid_grid_range_.min_y << std::endl;
+      //   // std::cout << "valid_grid_range_.max_y: " << valid_grid_range_.max_y << std::endl;
+      // }
       // tt.toc("PrecomputationGridStack2D");
     }
-    tt.toc("PrecomputationGridStack2D");
+    // float t = tt.toc("PrecomputationGridStack2D");
+    // ++N;
+    // avg_time += (t - avg_time) / N;  // 估计样本均值
+    // std::cout << "avg_time: " << avg_time << std::endl;
 }
 
 const SearchParameters::LinearBounds& 
@@ -284,7 +289,8 @@ bool FastCorrelativeScanMatcher2D::Match(
   // param: linear_search_window angular_search_window 
   const SearchParameters search_parameters(options_.linear_search_window_, // 7
                                            options_.angular_search_window_, // 30
-                                           point_cloud, map_resolution_, options_.first_layer_resolution_);
+                                           point_cloud, map_resolution_, options_.first_layer_resolution_,
+                                           options_.branch_and_bound_depth_);
   // 带入搜索参数进行搜粟，搜索中心为先验位姿
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
                                    point_cloud, min_score, score,
@@ -309,7 +315,8 @@ bool FastCorrelativeScanMatcher2D::MatchFullSubmap(
       M_PI,  // Angular search window, 180 degrees in both directions.
       point_cloud, 
       map_resolution_, 
-      options_.first_layer_resolution_);
+      options_.first_layer_resolution_,
+       options_.branch_and_bound_depth_);
   // 计算搜索窗口的中点 把这个中点作为搜索的起点
   const Eigen::Vector2i&  map_world_size = grid_map_->getGridMapBase().getMapGridSize();  
   const Pose2d center = Pose2d(map_world_size.x() / 2, map_world_size.y() / 2, 0);
@@ -329,27 +336,19 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     // Step: 将原点处的点云先旋转到预测的方向上
     const sensor::LaserPointCloud rotated_point_cloud = sensor::TransformPointCloud(
         point_cloud, Pose2d(0, 0, initial_pose_estimate.yaw()));
-
-    tt.tic(); 
     // Step: 生成按照不同角度旋转后的点云集合
     const std::vector<sensor::LaserPointCloud> rotated_scans =
         GenerateRotatedScans(rotated_point_cloud, search_parameters);
-
-    tt.toc("GenerateRotatedScans ");
-    tt.tic();  
     // Step: 将旋转的点云集合平移移动到搜索起点，并获取每个点的地图栅格坐标
     const std::vector<DiscreteScan2D> discrete_scans = DiscretizeScans(
         &grid_map_->getGridMapBase(), rotated_scans, initial_pose_estimate);
-    tt.toc("DiscretizeScans ");
     // Step: 获取地图的有效栅格范围
-    tt.tic();  
     // 缩小搜索窗口的大小 同时检查地图范围是否足够大   
     if (!search_parameters.ShrinkToFit(precomputation_grid_stack_->GetValidGridMapRange(), 
                                                                       &grid_map_->getGridMapBase(), 
                                                                       initial_pose_estimate)) {
       return false;  
     }
-    tt.toc("ShrinkToFit ");
     tt.tic();  
     // 计算最低分辨率中的所有的候选解的得分，并从大到小进行排序
     // 这里就是分支定界法中确定分支上界的环节
@@ -368,7 +367,6 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     // std::cout << "best_candidate.x: " << best_candidate.x << std::endl;
     // std::cout << "best_candidate.y: " << best_candidate.y << std::endl;
     // std::cout << "best_candidate.orientation: " << best_candidate.orientation << std::endl;
-    
     // 检查最优解的值, 如果大于指定阈值min_score就认为匹配成功,否则认为不匹配返回失败
     if (best_candidate.score > min_score) {
         score = best_candidate.score;
@@ -387,18 +385,13 @@ std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::ComputeLowestResolutionCandidates(
     const std::vector<DiscreteScan2D>& discrete_scans,
     const SearchParameters& search_parameters) const {
-  time::TicToc tt;
   // 生成最低分辨率层(栅格最粗)上的所有候选解
   std::vector<Candidate2D> lowest_resolution_candidates =
       GenerateLowestResolutionCandidates(search_parameters);
-  tt.toc("GenerateLowestResolutionCandidates ");
-  std::cout << "lowest_resolution_candidates size" << lowest_resolution_candidates.size() << std::endl;
-  tt.tic();
   // 计算每个候选解的得分, 按照匹配得分从大到小排序, 返回排列好的candidates 
   ScoreCandidates(
       precomputation_grid_stack_->Get(precomputation_grid_stack_->max_depth()),  // 最粗分辨率  
       discrete_scans, search_parameters, &lowest_resolution_candidates);
-  tt.toc("ScoreCandidates ");
   return lowest_resolution_candidates;
 }
 
@@ -412,11 +405,18 @@ std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
   // 分辨率     深度若为7, 那么 2^6 = 64
-  const int linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
+  const int& linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
+  const int& map_depth = precomputation_grid_stack_->max_depth();  
+  int angle_step = (1 << map_depth);
   int num_candidates = 0;
+
   // 遍历旋转后的每个点云     num_scans 即旋转点云的数量
-  for (int scan_index = 0; scan_index != search_parameters.rotated_scans_num_;
-       ++scan_index) {
+  for (int scan_index = 0; scan_index < search_parameters.rotated_scans_num_ + angle_step - 1;
+       scan_index += angle_step) {
+
+    if (scan_index >= search_parameters.rotated_scans_num_) {
+      scan_index = search_parameters.rotated_scans_num_ - 1;  
+    }
     // X方向候选解的个数
     // max_x 表示从起点向x增加方向搜索的size，min_x 表示从起点向x减少方向搜索的size
     // 例如  max_x = 1，min_x = -1， 则  候选解一共有  | <--- | ---- >|    3个 
@@ -442,8 +442,13 @@ FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
   std::vector<Candidate2D> candidates;
   candidates.reserve(num_candidates);
 
-  for (int scan_index = 0; scan_index != search_parameters.rotated_scans_num_;
-       ++scan_index) {
+  for (int scan_index = 0; scan_index != search_parameters.rotated_scans_num_ + angle_step - 1;
+       scan_index += angle_step) {
+
+    if (scan_index >= search_parameters.rotated_scans_num_) {
+      scan_index = search_parameters.rotated_scans_num_ - 1;  
+    }
+
     for (int x_index_offset = search_parameters.linear_bounds_[scan_index].min_x;
          x_index_offset <= search_parameters.linear_bounds_[scan_index].max_x;
          x_index_offset += linear_step_size) {
@@ -476,6 +481,9 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
       const SearchParameters& search_parameters,
       std::vector<Candidate2D>* const candidates) const {
     // 遍历所有的候选解, 对每个候选解进行打分
+    /**
+     * @todo 可以并行加速  
+     */
     for (Candidate2D& candidate : *candidates) {
       int sum = 0;
       // xy_index 为这帧旋转后的点云上的每个点对应在地图上的栅格坐标
@@ -486,8 +494,12 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
             xy_index.x() + candidate.x_index_offset,
             xy_index.y() + candidate.y_index_offset);
 
+        int value = precomputation_grid.GetValue(proposed_xy_index);
+        // if (value > 128)  value = 255;
+        // else if (value < 128) value = 0;
         // 对平移后的点云的每个点 获取在precomputation_grid上对应的栅格值
-        sum += precomputation_grid.GetValue(proposed_xy_index);   // 0 - 255 
+        // sum += precomputation_grid.GetValue(proposed_xy_index);   // 0 - 255 
+        sum += value;   // 0 - 255 
       }
 
       // 栅格值的和除以这个点云中点的个数, 作为这个候选解在这个 precomputation_grid 上的得分
@@ -536,6 +548,10 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
   Candidate2D best_high_resolution_candidate(0, 0, 0, search_parameters);
   best_high_resolution_candidate.score = min_score;
 
+  // 搜索步长减为上层的一半
+  const int half_width = candidate_resolution / 2;
+  const int half_theta_step = (1 << candidate_depth) / 2;  
+
   // 遍历所有的候选点(枝)
   for (const Candidate2D& candidate : candidates) {
     //  Step: 剪枝   上界低于设置的阈值 或者 低于当前的最优解那么直接不用搜索这一个分支了
@@ -547,30 +563,38 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
     }
     // 到这里说明 上界高与当前最优解，那么有可能这个枝存在得分高与最优的匹配得分的叶子，接下来需要对其进行分枝
     std::vector<Candidate2D> higher_resolution_candidates;
-    // 搜索步长减为上层的一半
-    const int half_width = candidate_resolution / 2;
 
-    // Step: 分枝 对x、y偏移进行遍历, 求出candidate的四个子节点候选解
-    for (int x_offset : {0, half_width}) { // 只能取0和half_width
-      // 如果超过了界限, 就跳过
-      if (candidate.x_index_offset + x_offset >
-          search_parameters.linear_bounds_[candidate.scan_index].max_x) {
+    // Step: 分枝 对x、y，theta偏移进行遍历, 求出candidate的八个子节点候选解
+    for (int theta_offset : {-half_theta_step, 0, half_theta_step}) {
+      if (candidate.scan_index + theta_offset > search_parameters.rotated_scans_num_ - 1) {
         break;
       }
-      for (int y_offset : {0, half_width}) {
-        if (candidate.y_index_offset + y_offset >
-            search_parameters.linear_bounds_[candidate.scan_index].max_y) {
-          break;
-        }
+      if (candidate.scan_index + theta_offset < 0) {
+        continue;
+      }
 
-        // 候选者依次推进来, 一共4个,可以看出, 分枝定界方法的分枝是向右下角的四个子节点进行分枝
-        higher_resolution_candidates.emplace_back(
-            candidate.scan_index, candidate.x_index_offset + x_offset,
-            candidate.y_index_offset + y_offset, search_parameters);
+      for (int x_offset : {0, half_width}) { // 只能取0和half_width
+        // // 如果超过了界限, 就跳过
+        // if (candidate.x_index_offset + x_offset >
+        //     search_parameters.linear_bounds_[candidate.scan_index + theta_offset].max_x) {
+        //   break;
+        // }
+
+        for (int y_offset : {0, half_width}) {
+          // if (candidate.y_index_offset + y_offset >
+          //     search_parameters.linear_bounds_[candidate.scan_index].max_y) {
+          //   break;
+          // }
+
+          // 候选者依次推进来, 一共4个,可以看出, 分枝定界方法的分枝是向右下角的四个子节点进行分枝
+          higher_resolution_candidates.emplace_back(
+              candidate.scan_index + theta_offset, candidate.x_index_offset + x_offset,
+              candidate.y_index_offset + y_offset, search_parameters);
+        }
       }
     }
 
-    // 对新生成的4个枝求解上界并进行排序, 同一个点云, 不同地图
+    // 对新生成的枝求解上界并进行排序, 同一个点云, 不同地图
     ScoreCandidates(precomputation_grid_stack_->Get(candidate_depth - 1),
                     discrete_scans, search_parameters,
                     &higher_resolution_candidates);

@@ -75,7 +75,6 @@ public:
             occ_prob_ = odds / (odds + 1.0f);
             prob_update_ = false;   
         }
-
         return occ_prob_;
     }
 

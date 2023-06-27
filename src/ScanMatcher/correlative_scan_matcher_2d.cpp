@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include "msa2d/ScanMatcher/correlative_scan_matcher_2d.h"
 
 namespace msa2d {
@@ -16,7 +17,8 @@ namespace ScanMatcher {
 SearchParameters::SearchParameters(const double linear_search_window,
                                    const double angular_search_window,
                                    const sensor::LaserPointCloud& point_cloud,
-                                   const double resolution, const int& expansion_coeff) : resolution_(resolution) {
+                                   const double resolution, const int& expansion_coeff,
+                                   const int& map_depth) : resolution_(resolution) {
   // We set this value to something on the order of resolution to make sure that
   // the std::acos() below is defined.
   float max_scan_range = 3.f * resolution;
@@ -35,8 +37,26 @@ SearchParameters::SearchParameters(const double linear_search_window,
   angular_perturbation_step_ =
       kSafetyMargin * std::acos(1. - math::Pow2(resolution_ * expansion_coeff) /
                                          (2. * math::Pow2(max_scan_range)));
+  /**
+   * @brief 计算每一层的角度分辨率，但是其实角度很小，因此角度分辨率的变化近似于栅格分辨率的变化 
+   */
+  // angular_perturbation_steps_.push_back(1);
+  // std::cout << "angular_perturbation_step_: " << angular_perturbation_step_ << std::endl;
 
-  // 范围除以分辨率得到个数
+  // for (int i = 1; i < map_depth; ++i) {
+  //   std::cout << "curr res: " << resolution_ * expansion_coeff * (1 << i) << std::endl;
+  //   float angular_perturbation_step = 
+  //     kSafetyMargin * std::acos(1. - math::Pow2(resolution_ * expansion_coeff * (1 << i)) /
+  //                                        (2. * math::Pow2(max_scan_range)));
+  //   std::cout << "angular_perturbation_step_: " << angular_perturbation_step << std::endl;
+  //   angular_perturbation_steps_.push_back(angular_perturbation_step / angular_perturbation_step_); 
+  // }
+
+  // for (auto& v : angular_perturbation_steps_) {
+  //   std::cout << "v: " << v << std::endl;
+  // }
+
+  // 范围除以分辨率得到个数     ceil向上取整数   
   angular_search_step_num_one_side_ =
       std::ceil(angular_search_window / angular_perturbation_step_);
   // num_scans是要生成旋转点云的个数, 将 num_angular_perturbations 扩大了2倍
@@ -127,10 +147,10 @@ bool SearchParameters::ShrinkToFit(const LinearBounds& map_bounds,
   linear_bounds_[0].max_y = std::min(linear_bounds_[0].max_y, 
                                                                                map_bound.max_y - init_pos_grid_index.y());
 
-        std::cout << "linear_bounds_[0].min_x: " << linear_bounds_[0].min_x << std::endl;
-      std::cout << "linear_bounds_[0].max_x: " << linear_bounds_[0].max_x << std::endl;
-      std::cout << "linear_bounds_[0].min_y: " << linear_bounds_[0].min_y << std::endl;
-      std::cout << "linear_bounds_[0].max_y: " << linear_bounds_[0].max_y << std::endl;
+      // std::cout << "linear_bounds_[0].min_x: " << linear_bounds_[0].min_x << std::endl;
+      // std::cout << "linear_bounds_[0].max_x: " << linear_bounds_[0].max_x << std::endl;
+      // std::cout << "linear_bounds_[0].min_y: " << linear_bounds_[0].min_y << std::endl;
+      // std::cout << "linear_bounds_[0].max_y: " << linear_bounds_[0].max_y << std::endl;
 
   for (int i = 1; i != rotated_scans_num_; ++i) {
     linear_bounds_[i] = linear_bounds_[0];
