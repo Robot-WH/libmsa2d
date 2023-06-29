@@ -359,7 +359,7 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     // Step: 进行基于分支定界算法的搜索, 获取最优解
     const Candidate2D best_candidate = BranchAndBound(
         discrete_scans, search_parameters, lowest_resolution_candidates,
-        precomputation_grid_stack_->max_depth(), precomputation_grid_stack_->max_resolution(),
+        precomputation_grid_stack_->max_depth(), precomputation_grid_stack_->max_resolution() / 2,
         min_score); // param: max_depth
 
     tt.toc("BranchAndBound ");
@@ -405,7 +405,7 @@ std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
   // 分辨率     深度若为7, 那么 2^6 = 64
-  const int& linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
+  const int& linear_step_size = precomputation_grid_stack_->max_resolution() / 2;   // 1 << x, 即 2^(x-1)
   const int& map_depth = precomputation_grid_stack_->max_depth();  
   int angle_step = (1 << map_depth);
   int num_candidates = 0;
