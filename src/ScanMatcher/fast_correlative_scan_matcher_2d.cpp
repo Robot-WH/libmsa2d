@@ -78,14 +78,15 @@ class SlidingWindowMaximum {
 // 构造不同分辨率的地图
 PrecomputationGrid2D::PrecomputationGrid2D(
     map::OccGridMapBase* grid_map, const int cell_width)
-    : offset_(-cell_width + 1, -cell_width + 1),
+    : offset_(-cell_width / 2, -cell_width / 2),
+    // : offset_(-cell_width + 1, -cell_width + 1),
       map_grid_size_(grid_map->getGridMapBase().getGridSizeX() + cell_width - 1,
                    grid_map->getGridMapBase().getGridSizeY()+ cell_width - 1),
       min_score_(0), // 0.1 min_score_
       max_score_(1), // 0.9 max_score_
       // cell_即栅格地图数据
       cells_(map_grid_size_.x() * map_grid_size_.y()) {
-  
+  std::cout << "offset_: " << offset_.transpose() << std::endl;
   // std::cout << "PrecomputationGrid2D build! cell_width: " << cell_width
   //   << ", map_grid_size_: " << map_grid_size_.transpose() 
   //   << ",cells_ size: " << cells_.size() << std::endl;
@@ -196,20 +197,23 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
       map::OccGridMapBase* grid_map,
       const FastCorrelativeScanMatcherOptions2D& options) {
     CHECK_GE(options.branch_and_bound_depth_, 1);
-    // 1 2 4 8 16 32 64 
+    // 1 3 5 9 ...
     // param: branch_and_bound_depth 默认为7, 确定 最大的分辨率, 也就是64个栅格合成一个格子
-    min_resolution_ = options.first_layer_resolution_;
-    max_resolution_ = min_resolution_ * (1 << (options.branch_and_bound_depth_ - 1));
-
+    min_resolution_ = options.first_layer_expansion_length_ * 2 + 1;
+    max_resolution_ = 1 + 2 * options.first_layer_expansion_length_ 
+      * (1 << (options.branch_and_bound_depth_ - 1));
+    std::cout << "min_resolution_: " << min_resolution_ << std::endl;
+    std::cout << "max_resolution_: " << max_resolution_ << std::endl;
     precomputation_grids_.reserve(options.branch_and_bound_depth_);
     // time::TicToc tt;
     // static float avg_time = 0; 
     // static int N = 0; 
     // 分辨率逐渐变大, i = 0时就是默认分辨率0.05, i=6时, width=64,也就是64个格子合成一个值
     for (int i = 0; i != options.branch_and_bound_depth_; ++i) {
-    // for (int i = 0; i < 2; ++i) {
+      // for (int i = 0; i < 2; ++i) {
       // time::TicToc tt;
-      const int width = min_resolution_ * (1 << i);
+      const int width = 1 + 2 * options.first_layer_expansion_length_ * (1 << i);
+      std::cout << "width: " << width << std::endl;
       // 构造不同分辨率的地图 PrecomputationGrid2D
       precomputation_grids_.emplace_back(grid_map, width);
       // 如果是原始地图，计算有效栅格覆盖的范围
@@ -289,7 +293,8 @@ bool FastCorrelativeScanMatcher2D::Match(
   // param: linear_search_window angular_search_window 
   const SearchParameters search_parameters(options_.linear_search_window_, // 7
                                            options_.angular_search_window_, // 30
-                                           point_cloud, map_resolution_, options_.first_layer_resolution_,
+                                           point_cloud, map_resolution_, 
+                                           2 * options_.first_layer_expansion_length_ + 1,
                                            options_.branch_and_bound_depth_);
   // 带入搜索参数进行搜粟，搜索中心为先验位姿
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
@@ -315,8 +320,8 @@ bool FastCorrelativeScanMatcher2D::MatchFullSubmap(
       M_PI,  // Angular search window, 180 degrees in both directions.
       point_cloud, 
       map_resolution_, 
-      options_.first_layer_resolution_,
-       options_.branch_and_bound_depth_);
+      2 * options_.first_layer_expansion_length_ + 1,
+      options_.branch_and_bound_depth_);
   // 计算搜索窗口的中点 把这个中点作为搜索的起点
   const Eigen::Vector2i&  map_world_size = grid_map_->getGridMapBase().getMapGridSize();  
   const Pose2d center = Pose2d(map_world_size.x() / 2, map_world_size.y() / 2, 0);
@@ -360,6 +365,7 @@ bool FastCorrelativeScanMatcher2D::MatchWithSearchParameters(
     const Candidate2D best_candidate = BranchAndBound(
         discrete_scans, search_parameters, lowest_resolution_candidates,
         precomputation_grid_stack_->max_depth(), precomputation_grid_stack_->max_resolution() / 2,
+        precomputation_grid_stack_->max_resolution() / precomputation_grid_stack_->min_resolution(),
         min_score); // param: max_depth
 
     tt.toc("BranchAndBound ");
@@ -404,12 +410,13 @@ FastCorrelativeScanMatcher2D::ComputeLowestResolutionCandidates(
 std::vector<Candidate2D>
 FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
     const SearchParameters& search_parameters) const {
-  // 分辨率     深度若为7, 那么 2^6 = 64
-  const int& linear_step_size = precomputation_grid_stack_->max_resolution() / 2;   // 1 << x, 即 2^(x-1)
-  const int& map_depth = precomputation_grid_stack_->max_depth();  
-  int angle_step = (1 << map_depth);
+  // 分辨率    
+  int linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
+  const int& min_step_size = precomputation_grid_stack_->min_resolution();  
+  int angle_step = linear_step_size / min_step_size;
+  std::cout << "angle_step: " << angle_step << std::endl;
   int num_candidates = 0;
-
+  linear_step_size /= 2;
   // 遍历旋转后的每个点云     num_scans 即旋转点云的数量
   for (int scan_index = 0; scan_index < search_parameters.rotated_scans_num_ + angle_step - 1;
        scan_index += angle_step) {
@@ -535,6 +542,7 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
       const std::vector<Candidate2D>& candidates, 
       const int candidate_depth,
       const int& candidate_resolution, 
+      const int& angle_step, 
       float min_score) const {
 
   // 这个函数是以递归调用的方式求解的
@@ -550,7 +558,11 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
 
   // 搜索步长减为上层的一半
   const int half_width = candidate_resolution / 2;
-  const int half_theta_step = (1 << candidate_depth) / 2;  
+  int half_theta_step = 1;
+  if (angle_step > 1) {
+    half_theta_step = angle_step / 2;  
+  }
+  
 
   // 遍历所有的候选点(枝)
   for (const Candidate2D& candidate : candidates) {
@@ -611,7 +623,7 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
         best_high_resolution_candidate,
         BranchAndBound(discrete_scans, search_parameters,
           higher_resolution_candidates, candidate_depth - 1, candidate_resolution / 2,
-          best_high_resolution_candidate.score));
+          half_theta_step, best_high_resolution_candidate.score));
   }
 
   return best_high_resolution_candidate;

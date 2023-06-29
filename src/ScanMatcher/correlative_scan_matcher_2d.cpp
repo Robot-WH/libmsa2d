@@ -35,7 +35,7 @@ SearchParameters::SearchParameters(const double linear_search_window,
    */
   const double kSafetyMargin = 1. - 1e-3;   // 缩小一点的系数  
   angular_perturbation_step_ =
-      kSafetyMargin * std::acos(1. - math::Pow2(resolution_ * expansion_coeff) /
+      kSafetyMargin * std::acos(1. - math::Pow2( resolution_ * expansion_coeff) /
                                          (2. * math::Pow2(max_scan_range)));
   /**
    * @brief 计算每一层的角度分辨率，但是其实角度很小，因此角度分辨率的变化近似于栅格分辨率的变化 

@@ -88,7 +88,7 @@ struct FastCorrelativeScanMatcherOptions2D {
     int branch_and_bound_depth_ = 5; 
     int linear_search_window_ = 5;   // xy搜索区域大小    m
     int angular_search_window_ = 30;
-    int first_layer_resolution_ = 4;    // 第一层的是4倍的分辨率  
+    int first_layer_expansion_length_ = 2;    // 第一层的单边膨胀长度  栅格总长度为 2 * first_layer_expansion_length_ + 1
 };
 
 class PrecomputationGridStack2D {
@@ -158,7 +158,8 @@ class FastCorrelativeScanMatcher2D {
   Candidate2D BranchAndBound(const std::vector<DiscreteScan2D>& discrete_scans,
                              const SearchParameters& search_parameters,
                              const std::vector<Candidate2D>& candidates,
-                             int candidate_depth, const int& candidate_resolution, float min_score) const;
+                             int candidate_depth, const int& candidate_resolution, 
+                             const int& angle_step, float min_score) const;
 
   const FastCorrelativeScanMatcherOptions2D options_;
   const float map_resolution_;
