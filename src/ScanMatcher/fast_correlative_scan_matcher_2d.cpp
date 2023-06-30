@@ -86,7 +86,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
       max_score_(1), // 0.9 max_score_
       // cell_即栅格地图数据
       cells_(map_grid_size_.x() * map_grid_size_.y()) {
-  std::cout << "offset_: " << offset_.transpose() << std::endl;
+  // std::cout << "offset_: " << offset_.transpose() << std::endl;
   // std::cout << "PrecomputationGrid2D build! cell_width: " << cell_width
   //   << ", map_grid_size_: " << map_grid_size_.transpose() 
   //   << ",cells_ size: " << cells_.size() << std::endl;
@@ -202,8 +202,8 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
     min_resolution_ = options.first_layer_expansion_length_ * 2 + 1;
     max_resolution_ = 1 + 2 * options.first_layer_expansion_length_ 
       * (1 << (options.branch_and_bound_depth_ - 1));
-    std::cout << "min_resolution_: " << min_resolution_ << std::endl;
-    std::cout << "max_resolution_: " << max_resolution_ << std::endl;
+    // std::cout << "min_resolution_: " << min_resolution_ << std::endl;
+    // std::cout << "max_resolution_: " << max_resolution_ << std::endl;
     precomputation_grids_.reserve(options.branch_and_bound_depth_);
     // time::TicToc tt;
     // static float avg_time = 0; 
@@ -213,7 +213,7 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
       // for (int i = 0; i < 2; ++i) {
       // time::TicToc tt;
       const int width = 1 + 2 * options.first_layer_expansion_length_ * (1 << i);
-      std::cout << "width: " << width << std::endl;
+      // std::cout << "width: " << width << std::endl;
       // 构造不同分辨率的地图 PrecomputationGrid2D
       precomputation_grids_.emplace_back(grid_map, width);
       // 如果是原始地图，计算有效栅格覆盖的范围
@@ -414,7 +414,7 @@ FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
   int linear_step_size = precomputation_grid_stack_->max_resolution();   // 1 << x, 即 2^(x-1)
   const int& min_step_size = precomputation_grid_stack_->min_resolution();  
   int angle_step = linear_step_size / min_step_size;
-  std::cout << "angle_step: " << angle_step << std::endl;
+  // std::cout << "angle_step: " << angle_step << std::endl;
   int num_candidates = 0;
   linear_step_size /= 2;
   // 遍历旋转后的每个点云     num_scans 即旋转点云的数量
