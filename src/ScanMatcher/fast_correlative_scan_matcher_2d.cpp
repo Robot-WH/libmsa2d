@@ -329,7 +329,7 @@ bool FastCorrelativeScanMatcher2D::Match(
   const SearchParameters search_parameters(options_.linear_search_window_, // 7
                                            options_.angular_search_window_, // 30
                                            point_cloud, map_resolution_, 
-                                           2 * options_.first_layer_expansion_length_ + 1,
+                                           2 * options_.first_layer_expansion_length_ + 1,     // 底层栅格的size
                                            options_.branch_and_bound_depth_);
   // 带入搜索参数进行搜粟，搜索中心为先验位姿
   return MatchWithSearchParameters(search_parameters, initial_pose_estimate,
@@ -355,7 +355,7 @@ bool FastCorrelativeScanMatcher2D::MatchFullSubmap(
       M_PI,  // Angular search window, 180 degrees in both directions.
       point_cloud, 
       map_resolution_, 
-      2 * options_.first_layer_expansion_length_ + 1,
+      2 * options_.first_layer_expansion_length_ + 1,     // 底层栅格的size
       options_.branch_and_bound_depth_);
   // 计算搜索窗口的中点 把这个中点作为搜索的起点
   const Eigen::Vector2i&  map_world_size = grid_map_->getGridMapBase().getMapGridSize();  
@@ -451,7 +451,7 @@ FastCorrelativeScanMatcher2D::GenerateLowestResolutionCandidates(
   int angle_step = linear_step_size / min_step_size;
   // std::cout << "angle_step: " << angle_step << std::endl;
   int num_candidates = 0;
-  linear_step_size /= 2;
+  linear_step_size /= 2;      // 平移步长是分辨率的1/2
   // 遍历旋转后的每个点云     num_scans 即旋转点云的数量
   for (int scan_index = 0; scan_index < search_parameters.rotated_scans_num_ + angle_step - 1;
        scan_index += angle_step) {
@@ -524,31 +524,22 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
       std::vector<Candidate2D>* const candidates) const {
     // 遍历所有的候选解, 对每个候选解进行打分
     /**
-     * @todo 可以并行加速  
+     * @brief 并行加速  
      */
-    for (Candidate2D& candidate : *candidates) {
+    #pragma omp parallel for
+    for (int i = 0; i < candidates->size(); ++i) {
+      Candidate2D& candidate = (*candidates)[i];
       int sum = 0;
-      // xy_index 为这帧旋转后的点云上的每个点对应在地图上的栅格坐标
-      for (const Eigen::Array2i& xy_index :
-          discrete_scans[candidate.scan_index]) {       // discrete_scans[candidate.scan_index] 获得了该旋转角度下的点云
-        // 旋转后的点云的每个点的坐标加上这个可行解的X与Y的偏置, 即将点云进行平移
+      for (const Eigen::Array2i& xy_index : discrete_scans[candidate.scan_index]) {
         const Eigen::Array2i proposed_xy_index(
             xy_index.x() + candidate.x_index_offset,
             xy_index.y() + candidate.y_index_offset);
 
         int value = precomputation_grid.GetValue(proposed_xy_index);
-        // if (value > 128)  value = 255;
-        // else if (value < 128) value = 0;
-        // 对平移后的点云的每个点 获取在precomputation_grid上对应的栅格值
-        // sum += precomputation_grid.GetValue(proposed_xy_index);   // 0 - 255 
-        sum += value;   // 0 - 255 
+        sum += value;
       }
-      // 栅格值的和除以这个点云中点的个数, 作为这个候选解在这个 precomputation_grid 上的得分
       candidate.score = precomputation_grid.ToScore(
           sum / static_cast<float>(discrete_scans[candidate.scan_index].size()));
-      // std::cout << "candidate.score: " << candidate.score << ", x_index_offset: " << candidate.x_index_offset
-      //   << ",candidate.y_index_offset: " << candidate.y_index_offset  << ", scan_index: " << candidate.scan_index
-      //   << std::endl;
     }
     // 根据候选解的score, 对所有候选解进行降序排列
     std::sort(candidates->begin(), candidates->end(),
