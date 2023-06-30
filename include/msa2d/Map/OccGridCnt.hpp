@@ -88,6 +88,16 @@ public:
         return occupied_t_ < free_t_;
     }
 
+        /**
+     * @brief 返回栅格是否未知
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool isUnknow() const {
+        return false;
+    }
+
     /**
    * Reset Cell to prior probability.
    */

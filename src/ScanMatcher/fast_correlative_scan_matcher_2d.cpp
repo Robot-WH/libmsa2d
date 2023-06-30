@@ -99,33 +99,68 @@ PrecomputationGrid2D::PrecomputationGrid2D(
     std::vector<float> intermediate;
     intermediate.resize(map_grid_size_.x() * origin_map_grid_size.y());   // 临时的地图数据
   
+  int grid_value = 0;  
   // 先对x方向进行分辨率膨胀
   // 对每一行从左到右横着做一次滑窗, 将滑窗后的地图放在intermediate(临时数据)中
   for (int y = 0; y != origin_map_grid_size.y(); ++y) {
     SlidingWindowMaximum current_values;
-    // 获取 grid_map 的x坐标的索引: 首先获取 (0, y)
-    current_values.AddValue(grid_map->getGridProbability(0, y));  // 添加占据的概率 
 
+    if (grid_map->isUnknow(0, y)) {
+      current_values.AddValue(0.5f);  // 添加占据的概率 
+    } else if (grid_map->isFree(0, y)) {
+      current_values.AddValue(0.01f);  // 添加占据的概率 
+    } else {
+      current_values.AddValue(0.99f);  // 添加占据的概率 
+    }
+    
     // Step: 1 滑动窗口在x方向开始划入地图, 所以只进行 填入值
     for (int x = -cell_width + 1; x != 0; ++x) {
       intermediate[x + cell_width - 1 + y * stride] = current_values.GetMaximum();
       if (x + cell_width < origin_map_grid_size.x()) {
-        current_values.AddValue(grid_map->getGridProbability(x + cell_width, y));
+
+        if (grid_map->isUnknow(x + cell_width, y)) {
+          current_values.AddValue(0.5f);
+        } else if (grid_map->isFree(x + cell_width, y)) {
+          current_values.AddValue(0.01f);
+        } else {
+          current_values.AddValue(0.99f);
+        }
       }
     }
 
     // Step: 2 滑动窗口已经完全在地图里了, 滑窗进行一入一出的操作
     for (int x = 0; x < origin_map_grid_size.x() - cell_width; ++x) {
       intermediate[x + cell_width - 1 + y * stride] = current_values.GetMaximum();
-      current_values.RemoveValue(grid_map->getGridProbability(x, y));
-      current_values.AddValue(grid_map->getGridProbability(x + cell_width, y));
+
+      if (grid_map->isUnknow(x, y)) {
+        current_values.RemoveValue(0.5f);
+      } else if (grid_map->isFree(x, y)) {
+        current_values.RemoveValue(0.01f);
+      } else {
+        current_values.RemoveValue(0.99f);
+      }
+
+      if (grid_map->isUnknow(x + cell_width, y)) {
+        current_values.AddValue(0.5f);
+      } else if (grid_map->isFree(x + cell_width, y)) {
+        current_values.AddValue(0.01f);
+      } else {
+        current_values.AddValue(0.99f);
+      }
     }
 
     // Step: 3 滑动窗口正在划出, 一次减少一个值, 所以intermediate的宽度比grid多 cell_width-1
     for (int x = std::max(origin_map_grid_size.x() - cell_width, 0);
          x != origin_map_grid_size.x(); ++x) {
       intermediate[x + cell_width - 1 + y * stride] = current_values.GetMaximum();
-      current_values.RemoveValue(grid_map->getGridProbability(x, y));
+
+      if (grid_map->isUnknow(x, y)) {
+        current_values.RemoveValue(0.5f);
+      } else if (grid_map->isFree(x, y)) {
+        current_values.RemoveValue(0.01f);
+      } else {
+        current_values.RemoveValue(0.99f);
+      }
     }
     // 理论上, 滑窗走完地图的一行之后应该是空的, 经过 只入, 一出一入, 只出, 3个步骤
     current_values.CheckIsEmpty();
@@ -508,11 +543,9 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
         // sum += precomputation_grid.GetValue(proposed_xy_index);   // 0 - 255 
         sum += value;   // 0 - 255 
       }
-
       // 栅格值的和除以这个点云中点的个数, 作为这个候选解在这个 precomputation_grid 上的得分
       candidate.score = precomputation_grid.ToScore(
           sum / static_cast<float>(discrete_scans[candidate.scan_index].size()));
-
       // std::cout << "candidate.score: " << candidate.score << ", x_index_offset: " << candidate.x_index_offset
       //   << ",candidate.y_index_offset: " << candidate.y_index_offset  << ", scan_index: " << candidate.scan_index
       //   << std::endl;
@@ -563,7 +596,6 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
     half_theta_step = angle_step / 2;  
   }
   
-
   // 遍历所有的候选点(枝)
   for (const Candidate2D& candidate : candidates) {
     //  Step: 剪枝   上界低于设置的阈值 或者 低于当前的最优解那么直接不用搜索这一个分支了
@@ -628,6 +660,5 @@ Candidate2D FastCorrelativeScanMatcher2D::BranchAndBound(
 
   return best_high_resolution_candidate;
 }
-
 }  // namespace 
 }  // namespace

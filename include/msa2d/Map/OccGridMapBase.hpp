@@ -35,6 +35,8 @@ public:
     virtual bool isFree(int xMap, int yMap) const = 0;
     virtual bool isOccupied(int index) const = 0; 
     virtual bool isFree(int index) const  = 0;
+    virtual bool isUnknow(int index) const  = 0;
+    virtual bool isUnknow(int xMap, int yMap) const  = 0;
     virtual void reset() = 0;
     virtual void clear() = 0; 
     virtual void updateByScan(const std::vector<Eigen::Vector2f>& laser_same_scale, 

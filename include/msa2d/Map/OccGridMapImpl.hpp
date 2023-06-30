@@ -68,6 +68,14 @@ public:
         return occ_grid_map_.getCell(index).isFree();
     }
 
+    bool isUnknow(int xMap, int yMap) const override {
+        return occ_grid_map_.getCell(xMap, yMap).isUnknow();
+    }
+
+    bool isUnknow(int index) const override {
+        return occ_grid_map_.getCell(index).isUnknow();
+    }
+
     void reset() override {
         occ_grid_map_.reset();   
     }

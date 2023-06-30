@@ -97,6 +97,16 @@ public:
     }
 
     /**
+     * @brief 返回栅格是否未知
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool isUnknow() const {
+        return logOddsVal == 0.0f;
+    }
+
+    /**
    * Reset Cell to prior probability.
    */
     void resetGridCell() {
