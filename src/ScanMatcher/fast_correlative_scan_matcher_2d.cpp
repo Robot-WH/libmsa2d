@@ -109,7 +109,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
       current_values.AddValue(0.5f);  // 添加占据的概率 
     } else if (grid_map->isFree(0, y)) {
       current_values.AddValue(0.01f);  // 添加占据的概率 
-    } else {
+    } else if (grid_map->isOccupied(0, y)) {
       current_values.AddValue(0.99f);  // 添加占据的概率 
     }
     
@@ -122,7 +122,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
           current_values.AddValue(0.5f);
         } else if (grid_map->isFree(x + cell_width, y)) {
           current_values.AddValue(0.01f);
-        } else {
+        } else if (grid_map->isOccupied(x + cell_width, y)) {
           current_values.AddValue(0.99f);
         }
       }
@@ -136,7 +136,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
         current_values.RemoveValue(0.5f);
       } else if (grid_map->isFree(x, y)) {
         current_values.RemoveValue(0.01f);
-      } else {
+      } else if (grid_map->isOccupied(x, y)) {
         current_values.RemoveValue(0.99f);
       }
 
@@ -144,7 +144,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
         current_values.AddValue(0.5f);
       } else if (grid_map->isFree(x + cell_width, y)) {
         current_values.AddValue(0.01f);
-      } else {
+      } else if (grid_map->isOccupied(x + cell_width, y)) {
         current_values.AddValue(0.99f);
       }
     }
@@ -158,7 +158,7 @@ PrecomputationGrid2D::PrecomputationGrid2D(
         current_values.RemoveValue(0.5f);
       } else if (grid_map->isFree(x, y)) {
         current_values.RemoveValue(0.01f);
-      } else {
+      } else if (grid_map->isOccupied(x, y)) {
         current_values.RemoveValue(0.99f);
       }
     }
