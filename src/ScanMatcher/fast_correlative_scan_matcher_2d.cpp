@@ -201,6 +201,21 @@ PrecomputationGrid2D::PrecomputationGrid2D(
   }
 }
 
+  PrecomputationGrid2D& 
+  PrecomputationGrid2D::operator=(PrecomputationGrid2D&& other) noexcept {
+    if (this == &other) {  // 检查自我赋值情况
+      return *this;
+    }
+
+    offset_ = std::move(other.offset_);
+    map_grid_size_ = std::move(other.map_grid_size_);
+    min_score_ = other.min_score_;
+    max_score_ = other.max_score_;
+    cells_ = std::move(other.cells_);
+
+    return *this;
+  }
+
 // 将概率[0.1, 0.9]转成[0, 255]之间的值
 uint8_t PrecomputationGrid2D::ComputeCellValue(const float probability) const {
   const int cell_value = std::round(
@@ -239,18 +254,19 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
       * (1 << (options.branch_and_bound_depth_ - 1));
     // std::cout << "min_resolution_: " << min_resolution_ << std::endl;
     // std::cout << "max_resolution_: " << max_resolution_ << std::endl;
-    precomputation_grids_.reserve(options.branch_and_bound_depth_);
+    precomputation_grids_.resize(options.branch_and_bound_depth_);
     // time::TicToc tt;
     // static float avg_time = 0; 
     // static int N = 0; 
-    // 分辨率逐渐变大, i = 0时就是默认分辨率0.05, i=6时, width=64,也就是64个格子合成一个值
+    // 并行构造地图金字塔 
+    #pragma omp parallel for
     for (int i = 0; i != options.branch_and_bound_depth_; ++i) {
       // for (int i = 0; i < 2; ++i) {
       // time::TicToc tt;
       const int width = 1 + 2 * options.first_layer_expansion_length_ * (1 << i);
       // std::cout << "width: " << width << std::endl;
       // 构造不同分辨率的地图 PrecomputationGrid2D
-      precomputation_grids_.emplace_back(grid_map, width);
+      precomputation_grids_[i] = PrecomputationGrid2D(grid_map, width);
       // 如果是原始地图，计算有效栅格覆盖的范围
       // if (i == 0) {
       //   // time::TicToc tt;

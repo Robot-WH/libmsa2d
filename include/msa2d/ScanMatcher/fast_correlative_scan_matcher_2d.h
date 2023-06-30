@@ -40,8 +40,14 @@ namespace ScanMatcher {
 
 class PrecomputationGrid2D {
  public:
+  PrecomputationGrid2D() {}
+  // 拷贝 
+  PrecomputationGrid2D(const PrecomputationGrid2D& other) = default;
+  PrecomputationGrid2D& operator=(const PrecomputationGrid2D& other) = default;
   PrecomputationGrid2D(map::OccGridMapBase* grid_map, const int cell_width);
-
+  // 移动赋值
+  PrecomputationGrid2D& operator=(PrecomputationGrid2D&& other) noexcept;
+  
   // Returns a value between 0 and 255 to represent probabilities between
   // min_score and max_score.
   // 获取栅格值    此时 栅格的值已经从概率 0-1 转换成了 0 - 255 
@@ -74,11 +80,11 @@ class PrecomputationGrid2D {
  private:
   uint8_t ComputeCellValue(float probability) const;
 
-  const Eigen::Array2i offset_;
-  const Eigen::Vector2i map_grid_size_;    // 地图x方向与y方向的格子数
+  Eigen::Array2i offset_;
+  Eigen::Vector2i map_grid_size_;    // 地图x方向与y方向的格子数
 
-  const float min_score_;
-  const float max_score_;
+  float min_score_;
+  float max_score_;
 
   // Probabilites mapped to 0 to 255.
   std::vector<uint8_t> cells_;   // 不同分辨率的栅格地图
@@ -108,8 +114,8 @@ public:
   const int& max_resolution() const { return max_resolution_; }
   const int& min_resolution() const { return min_resolution_;}
 private:
-  int min_resolution_;  
-  int max_resolution_;  
+  int min_resolution_ = 0;  
+  int max_resolution_ = 0;  
   SearchParameters::LinearBounds valid_grid_range_{9999, 0, 9999, 0};  // 有效栅格的范围  
   std::vector<PrecomputationGrid2D> precomputation_grids_;
 };
