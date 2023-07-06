@@ -25,7 +25,7 @@
 
 #include <memory>
 #include <vector>
-#include <opencv2/opencv.hpp>
+// #include <opencv2/opencv.hpp>
 
 #include "Eigen/Core"
 // #include "cartographer/common/port.h"
@@ -73,7 +73,7 @@ class PrecomputationGrid2D {
     return min_score_ + value * ((max_score_ - min_score_) / 255.f);
   }
 
-  cv::Mat ToImage() const; 
+  // cv::Mat ToImage() const; 
 
   const Eigen::Vector2i& GetMapGridSize() const;  
 

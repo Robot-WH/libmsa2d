@@ -225,18 +225,18 @@ uint8_t PrecomputationGrid2D::ComputeCellValue(const float probability) const {
   return cell_value;
 }
 
-cv::Mat PrecomputationGrid2D::ToImage() const {
-  // 构造opencv mat 
-  cv::Mat map_img(map_grid_size_.y(), map_grid_size_.x(), CV_8UC1, cv::Scalar(255));
-  // 转为灰度
-  for (int row = 0; row < map_grid_size_.y(); row++) {
-    for (int col = 0; col < map_grid_size_.x(); col++) {
-        map_img.at<uint8_t>(map_grid_size_.y() - 1 - row, col) = 
-          cells_[col + map_grid_size_.x() * row];
-    }
-  }
-  return map_img; 
-}
+// cv::Mat PrecomputationGrid2D::ToImage() const {
+//   // 构造opencv mat 
+//   cv::Mat map_img(map_grid_size_.y(), map_grid_size_.x(), CV_8UC1, cv::Scalar(255));
+//   // 转为灰度
+//   for (int row = 0; row < map_grid_size_.y(); row++) {
+//     for (int col = 0; col < map_grid_size_.x(); col++) {
+//         map_img.at<uint8_t>(map_grid_size_.y() - 1 - row, col) = 
+//           cells_[col + map_grid_size_.x() * row];
+//     }
+//   }
+//   return map_img; 
+// }
 
 const Eigen::Vector2i& PrecomputationGrid2D::GetMapGridSize() const {
   return map_grid_size_;  
@@ -259,7 +259,7 @@ PrecomputationGridStack2D::PrecomputationGridStack2D(
     // static float avg_time = 0; 
     // static int N = 0; 
     // 并行构造地图金字塔 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (int i = 0; i != options.branch_and_bound_depth_; ++i) {
       // for (int i = 0; i < 2; ++i) {
       // time::TicToc tt;
@@ -542,7 +542,7 @@ void FastCorrelativeScanMatcher2D::ScoreCandidates(
     /**
      * @brief 并行加速  
      */
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (int i = 0; i < candidates->size(); ++i) {
       Candidate2D& candidate = (*candidates)[i];
       int sum = 0;

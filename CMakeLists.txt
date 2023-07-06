@@ -25,59 +25,36 @@ set(MSALib_INCLUDE_DIR ${catkin_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/inclu
 # list(APPEND MSAL3D_INCLUDE_DIR ${catkin_INCLUDE_DIRS})
 message("MSALib_INCLUDE_DIR: " ${MSALib_INCLUDE_DIR})
 
-# file(GLOB_RECURSE common CONFIGURE_DEPENDS src/Sensor/*.cpp) 
-# add_library(common_lib SHARED ${common})
-# target_include_directories(common_lib PUBLIC 
-#     include
-#     ${EIGEN3_INCLUDE_DIR}
-#     ${GLOG_INCLUDE_DIRS}
-# )
-# target_link_libraries(common_lib PUBLIC 
-#     glog::glog
-# )
-
-file(GLOB_RECURSE map_src CONFIGURE_DEPENDS src/Map/*.cpp) 
-add_library(map_lib SHARED ${map_src})
-target_include_directories(map_lib PUBLIC 
-    include
-    ${EIGEN3_INCLUDE_DIR}
-    ${GLOG_INCLUDE_DIRS}
-    ${libnabo_INCLUDE_DIRS}
-)
-target_link_libraries(map_lib PUBLIC 
-    glog::glog
-    # common_lib
-    libnabo::nabo
-)
-
-# GLOB_RECURSE 会递归的找到子目录文件
-# 加了CONFIGURE_DEPENDS，如果有新文件添加，cmake --build 会自动运行 cmake -B build 进行更新
+file(GLOB_RECURSE common CONFIGURE_DEPENDS src/Filter/*.cpp src/Map/*.cpp) 
 file(GLOB_RECURSE scan_matcher_src CONFIGURE_DEPENDS src/ScanMatcher/*.cpp) 
-add_library(scan_matcher_lib SHARED ${scan_matcher_src})
-target_include_directories(scan_matcher_lib PUBLIC 
+
+add_library(msa2d_lib SHARED ${common} ${scan_matcher_src})
+target_include_directories(msa2d_lib PUBLIC 
     include
     ${EIGEN3_INCLUDE_DIR}
     ${GLOG_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${libnabo_INCLUDE_DIRS}
 )
-target_link_libraries(scan_matcher_lib PUBLIC 
+target_link_libraries(msa2d_lib PUBLIC 
     ${PCL_LIBRARYS}
     ${OpenCV_LIBS}
     glog::glog
-    # common_lib
+    libnabo::nabo
 )
+
 
 add_executable(test_csm_grid src/test/test_csm_grid.cpp)
 target_link_libraries(test_csm_grid
-    scan_matcher_lib
+    msa2d_lib
 )
 
 #############
 ## INSTALL ##
 #############
 
-install(TARGETS map_lib scan_matcher_lib
+install(TARGETS msa2d_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .a
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .so
 )

@@ -32,6 +32,17 @@ class PointCloud {
   PointCloud() {}
   explicit PointCloud(std::vector<_PointType> points)
       : points_(std::move(points)) {}
+  PointCloud(const PointCloud& other) = default;
+  PointCloud& operator=(const PointCloud& other) = default;
+  PointCloud(PointCloud&& other) {
+    points_ = std::move(other.points_);
+  }
+  PointCloud& operator=(PointCloud&& other) {
+    if (this != &other) {
+        points_ = std::move(other.points_);
+    }
+    return *this;
+  }
 
   size_t size() const { return points_.size(); }
   bool empty() const { return points_.empty(); }
@@ -53,7 +64,10 @@ class PointCloud {
   const _PointType& front() const {return points_.front();}
   const _PointType& back() const {return points_.back();}
 
-  void push_back(_PointType value) {
+  void push_back(const _PointType& value) {
+      points_.push_back(value);
+  }
+  void push_back(_PointType&& value) {
       points_.push_back(std::move(value));
   }
 
