@@ -52,14 +52,22 @@ class PointCloud {
       return points_;
   }
 
+  _PointType& operator[](const size_t index) {
+    return points_[index];
+  }
+
   const _PointType& operator[](const size_t index) const {
     return points_[index];
   }
 
   // Iterator over the points in the point cloud.
-  using ConstIterator = typename std::vector<_PointType>::const_iterator;
-  ConstIterator begin() const { return points_.begin(); }
-  ConstIterator end() const { return points_.end(); }
+  using Iterator = typename std::vector<_PointType>::iterator;
+  Iterator begin() { return points_.begin(); }
+  Iterator end() { return points_.end(); }
+
+  using const_iterator = typename std::vector<_PointType>::const_iterator;
+  const_iterator begin() const { return points_.begin(); }  
+  const_iterator end() const { return points_.end(); }  
 
   const _PointType& front() const {return points_.front();}
   const _PointType& back() const {return points_.back();}

@@ -11,7 +11,8 @@ namespace sensor {
 struct ImuData {
     double time_stamp_ = 0;
     Eigen::Vector3d acc_;
-    Eigen::Vector3d angular_v_;  
+    Eigen::Vector3d gyro_;  
+    Eigen::Quaterniond orientation_;  
 };
 
 struct WheelOdom {
