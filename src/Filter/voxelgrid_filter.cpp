@@ -18,8 +18,16 @@ VoxelGridFilter::VoxelGridFilter(float cell_size, float lidar_range)
     map_length_ = std::ceil(2 * lidar_range / cell_size); 
 }
 
+/**
+ * @brief 对激光点进行体素降采样滤波    同时要保证点顺序是从小到大  
+ * 
+ * @param point_cloud 
+ */
 // void VoxelGridFilter::Filter(sensor::LaserPointCloud& point_cloud) {
 //     hash_map_.clear();
+//     std::vector<uint16_t> cell_seq;
+//     cell_seq.reserve(point_cloud.size()); 
+
 //     for (uint16_t i = 0; i < point_cloud.size(); ++i) {
 //         float map_x = (point_cloud[i].pos_.x() + lidar_range_) / cell_size_; 
 //         float map_y = (point_cloud[i].pos_.y() + lidar_range_) / cell_size_; 
@@ -34,15 +42,16 @@ VoxelGridFilter::VoxelGridFilter(float cell_size, float lidar_range)
 //             }
 //         } else {
 //             hash_map_[key] = CellInfo(i, cost_v);
+//             cell_seq.push_back(key);
 //         }
 //     }
 //     sensor::LaserPointCloud filtered_pointcloud;
 //     filtered_pointcloud.reserve(hash_map_.size());
 //     // 提取点云
-//     for (const auto& pair : hash_map_) {
-//         uint16_t index = pair.second.point_index_;
-//         filtered_pointcloud.push_back(point_cloud[index]); 
+//     for (const uint16_t& i : cell_seq) {
+//         filtered_pointcloud.push_back(point_cloud[hash_map_[i].point_index_]); 
 //     }
+
 //     point_cloud = std::move(filtered_pointcloud);
 // }
 

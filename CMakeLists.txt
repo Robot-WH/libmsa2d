@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 find_package(Ceres REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 find_package(Eigen3  REQUIRED)
-find_package(OpenCV 3.0 QUIET)
+find_package(OpenCV 3.2 REQUIRED)
 find_package(glog  REQUIRED)
 find_package(libnabo REQUIRED)
 find_package(Boost REQUIRED COMPONENTS timer)
@@ -29,14 +29,23 @@ file(GLOB_RECURSE common CONFIGURE_DEPENDS src/Filter/*.cpp src/Map/*.cpp)
 file(GLOB_RECURSE scan_matcher_src CONFIGURE_DEPENDS src/ScanMatcher/*.cpp) 
 
 add_library(msa2d_lib SHARED ${common} ${scan_matcher_src})
+
 target_include_directories(msa2d_lib PUBLIC 
     include
+    include/msa2d/
     ${EIGEN3_INCLUDE_DIR}
     ${GLOG_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${libnabo_INCLUDE_DIRS}
 )
+
+# message("4567893456789234567892345678923456789234567891234567, " ${OpenCV_INCLUDE_DIRS})
+# target_link_directories(msa2d_lib PRIVATE
+#     /home/lwh/cross_compile/usr/lib/aarch64-linux-gnu
+#     /home/lwh/cross_compile/usr/lib
+# )
+
 target_link_libraries(msa2d_lib PUBLIC 
     ${PCL_LIBRARYS}
     ${OpenCV_LIBS}
@@ -44,6 +53,7 @@ target_link_libraries(msa2d_lib PUBLIC
     libnabo::nabo
 )
 
+# message("4567893456789234567892345678923456789234567891234567, " ${OpenCV_LIBS})
 
 add_executable(test_csm_grid src/test/test_csm_grid.cpp)
 target_link_libraries(test_csm_grid
@@ -59,7 +69,7 @@ install(TARGETS msa2d_lib
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .so
 )
 
-install(DIRECTORY include/msa2d
-DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION})
+# install(DIRECTORY include/msa2d
+# DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION})
 
 

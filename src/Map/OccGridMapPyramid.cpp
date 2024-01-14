@@ -102,8 +102,8 @@ void OccGridMapPyramid::updateByScan(const std::vector<sensor::LaserPointContain
             << color::RESET << std::endl;
         // 计算map移动后原点的世界坐标
         // map的中点移动到当前laser处
-        Eigen::Vector2f new_map_pos_in_world{laser_pose_in_world[0] - option_.map_sizeX * 0.5f,
-                                                                                                laser_pose_in_world[1] - option_.map_sizeY * 0.5f}; 
+        Eigen::Vector2f new_map_pos_in_world{laser_pose_in_world[0] - option_.map_sizeX  * 0.5f,
+                                                                                                laser_pose_in_world[1] - option_.map_sizeY  * 0.5f}; 
         // 移动地图金字塔
         // time::TicToc tt;
         moveTo(new_map_pos_in_world); 

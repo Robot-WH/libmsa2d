@@ -121,6 +121,7 @@ public:
      * 
      */
     void clear() {
+        std::cout << "clear grid map " << std::endl;
         int size = getMapAllGridNum();
 
         for (int i = 0; i < size; ++i) {

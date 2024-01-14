@@ -15,6 +15,10 @@ public:
         convert::NormAngle(vec_[2]);
     }
 
+    Pose2d(const Eigen::Vector3f& vec) : vec_(vec) {
+        convert::NormAngle(vec_[2]);
+    }
+
     void SetIdentity() {
         vec_.setZero(); 
     }

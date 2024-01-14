@@ -1,11 +1,9 @@
-
 #pragma once 
-
 #include <Eigen/Geometry>
+#include <eigen3/Eigen/Dense>
 #include "../Sensor/LaserPointContainer.h"
 #include "../Map/OccGridMapBase.hpp"
 #include "../Map/OccGridMapPyramid.h"
-
 namespace msa2d {
 namespace ScanMatcher {
 /**
@@ -24,13 +22,13 @@ public:
 
     /**
      * 地图匹配，通过多分辨率地图求解当前激光帧的pose
-     * @param beginEstimateWorld 世界坐标下先验位姿
+     * @param predictPoseInWorld 世界坐标下先验位姿
      * @param dataContainers 激光观测金字塔数据
      * @param map 匹配金字塔地图  
      * @param covMatrix
      * @return  
      */
-    virtual Eigen::Vector3f Solve(const Eigen::Vector3f& beginEstimateWorld, 
+    virtual Eigen::Vector3f Solve(const Eigen::Vector3f& predictPoseInWorld, 
                                                                 const std::vector<sensor::LaserPointContainer>& dataContainers, 
                                                                 map::OccGridMapPyramid& map, 
                                                                 Eigen::Matrix3f& covMatrix);
@@ -38,14 +36,14 @@ public:
 private:
     /**
      * 实际进行位姿估计的函数
-     * @param beginEstimateWorld  位姿初值
+     * @param predictPoseInWorld  位姿初值
      * @param grid_map  参与匹配的栅格地图 
      * @param dataContainer   激光数据    与  当前OccMap同分辨率  
      * @param covMatrix   协方差矩阵
      * @param maxIterations   最大迭代次数
      * @return
      */
-    Eigen::Vector3f matchData(const Eigen::Vector3f& beginEstimateWorld, 
+    Eigen::Vector3f matchData(const Eigen::Vector3f& predictPoseInWorld, 
                                                             map::OccGridMapBase* grid_map, 
                                                             const sensor::LaserPointContainer& dataContainer, 
                                                             Eigen::Matrix3f& covMatrix, 
@@ -61,7 +59,8 @@ protected:
     */
     bool estimateTransformationGN(Eigen::Vector3f& estimate,
                                                                         map::OccGridMapBase* grid_map,
-                                                                        const sensor::LaserPointContainer& dataPoints);
+                                                                        const sensor::LaserPointContainer& dataPoints,
+                                                                        bool evaluate_degenerate = false);
 
     void updateEstimatedPose(Eigen::Vector3f &estimate, const Eigen::Vector3f &change);
 
@@ -89,8 +88,11 @@ protected:
 
 protected:
     Option option_;  
-    Eigen::Vector3f dTr;
-    Eigen::Matrix3f H;
+    Eigen::Vector3f dTr_;
+    Eigen::Matrix3f H_;
+    Eigen::Matrix3f V_u_;  
+    Eigen::Matrix3f V_f_;  
+    bool is_degenerate_ = false;
 };
 }
 }

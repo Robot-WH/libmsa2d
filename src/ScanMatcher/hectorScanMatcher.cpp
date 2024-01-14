@@ -1,44 +1,82 @@
 #include <glog/logging.h>
 #include "msa2d/ScanMatcher/hectorScanMatcher.h"
+#include "msa2d/common/Pose2d.hpp"
 
 namespace msa2d {
 namespace ScanMatcher {
-
+/**
+ * @brief Construct a new hector Scan Matcher::hector Scan Matcher object
+ * 
+ * @param option 
+ */
 hectorScanMatcher::hectorScanMatcher(Option option) : option_(option) {
 }
 
+/**
+ * @brief Destroy the hector Scan Matcher::hector Scan Matcher object
+ * 
+ */
 hectorScanMatcher::~hectorScanMatcher() {
 }
 
-Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& beginEstimateWorld, 
+/**
+ * @brief 
+ * 
+ * @param predictPoseInWorld 
+ * @param dataContainers 
+ * @param map 
+ * @param covMatrix 
+ * @return Eigen::Vector3f 
+ */
+Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWorld, 
                                                                                         const std::vector<sensor::LaserPointContainer>& dataContainers, 
                                                                                         map::OccGridMapPyramid& map, 
                                                                                         Eigen::Matrix3f& covMatrix) {
     size_t size = map.getMapLevels();
-    Eigen::Vector3f tmp(beginEstimateWorld);
-    /// coarse to fine 的pose求精过程，i层的求解结果作为i-1层的求解初始值。
+    Pose2d predict_pose(predictPoseInWorld);
+    Eigen::Vector3f tmp(predictPoseInWorld);
+    /// coarse to fine 的pose求精过程，i层的求解结果作为 i - 1层的求解初始值。
     for (int index = size - 1; index >= 0; --index) {
         if (index == 0) {
             tmp = matchData(tmp, map.getGridMap(index), dataContainers[index], covMatrix, 5);
         } else {
             tmp = matchData(tmp, map.getGridMap(index), dataContainers[index], covMatrix, 3);
         }
+            
+        if (is_degenerate_) {
+            std::cout << "退化修复" << std::endl;
+            Pose2d matched_pose(tmp);
+            // 计算校正量
+            Pose2d correct = predict_pose.inv() * matched_pose;
+            std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
+            std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
+            std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
+            std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
+            // 根据退化情况进行修复
+            // 校正只在非退化方向产生作用
+            correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
+            std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
+            std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
+            tmp = (predict_pose * correct).vec();
+            is_degenerate_ = false;  
+        }
     }
+
     return tmp;
 }
 
-Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimateWorld, 
+Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& predictPoseInWorld, 
                                                                                                     map::OccGridMapBase* grid_map, 
                                                                                                     const sensor::LaserPointContainer& dataContainer, 
                                                                                                     Eigen::Matrix3f& covMatrix, 
                                                                                                     int maxIterations) {
     // 第一帧时，dataContainer为空 因此不会进行匹配                                                      
     if (dataContainer.getSize() != 0) {
-        // beginEstimateWorld 为相对于世界坐标系的位姿 ，这里将世界坐标系的位姿转换为相对于当前OccMap的
-        Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().PoseWorldToMap(beginEstimateWorld));
+        // predictPoseInWorld 为相对于世界坐标系的位姿 ，这里将世界坐标系的位姿转换为相对于当前OccMap的
+        Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().PoseWorldToMap(predictPoseInWorld));
         Eigen::Vector3f estimate(beginEstimateMap);
         // 2. 第一次迭代
-        estimateTransformationGN(estimate, grid_map, dataContainer);
+        estimateTransformationGN(estimate, grid_map, dataContainer, 1);
         int numIter = maxIterations;
         /** 3. 多次迭代求解 **/
         for (int i = 0; i < numIter; ++i) {
@@ -50,11 +88,11 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimat
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0).inverse());
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0));
         // 使用Hessian矩阵近似协方差矩阵
-        covMatrix = H;
+        covMatrix = H_;
         // 结果转换回物理坐标系下 -- 转换回实际尺度
         return grid_map->getGridMapBase().PoseMapToWorld(estimate);
     }
-    return beginEstimateWorld;
+    return predictPoseInWorld;
 }
 
 /**
@@ -66,15 +104,39 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& beginEstimat
 */
 bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
                                                                                                                 map::OccGridMapBase* grid_map,
-                                                                                                                const sensor::LaserPointContainer& dataPoints) {
+                                                                                                                const sensor::LaserPointContainer& dataPoints,
+                                                                                                                bool evaluate_degenerate) {
     /** 核心函数，计算H矩阵和dTr向量(ｂ列向量)---- occGridMapUtil.h 中 **/
-    getCompleteHessianDerivs(estimate, grid_map, dataPoints, H, dTr);
+    getCompleteHessianDerivs(estimate, grid_map, dataPoints, H_, dTr_);
+
+    if (evaluate_degenerate) {
+        Eigen::JacobiSVD<Eigen::Matrix3f> svd(H_, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        // Eigen::Matrix<float, 3, 1> x = svd.matrixV().col(2); // 最小奇异值对应的特征向量为解
+        // if (x[0] < 0) x = -x; // use the standard quaternion
+        Eigen::Vector3f singular = svd.singularValues();    // singular value
+        std::cout<<"singular: "<<singular.transpose()<<std::endl;
+        V_f_ = svd.matrixV().transpose(); 
+        V_u_ = V_f_; 
+        is_degenerate_ = true;
+
+        for (int i = 2; i >= 0; --i) {
+            if (singular[i] > 20) {
+                if (i == 2) {
+                    is_degenerate_ = false;  
+                }
+                break; 
+            }
+            V_u_.row(i) = Eigen::Matrix<float, 1, 3>::Zero();  
+            std::cout << color::RED << "退化，方向：" << V_f_.row(i) << color::RESET << std::endl;
+        }
+    }
+
     //std::cout << "\nH\n" << H  << "\n";
     //std::cout << "\ndTr\n" << dTr  << "\n";
     // 判断H是否可逆, 判断增量非0,避免无用计算
-    if ((H(0, 0) != 0.0f) && (H(1, 1) != 0.0f)) {
+    if ((H_(0, 0) != 0.0f) && (H_(1, 1) != 0.0f)) {
         // 求解位姿增量
-        Eigen::Vector3f searchDir(H.inverse() * dTr);
+        Eigen::Vector3f searchDir(H_.inverse() * dTr_);
         // 角度增量不能太大
         if (searchDir[2] > 0.2f) {
             searchDir[2] = 0.2f;

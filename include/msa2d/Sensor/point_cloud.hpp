@@ -19,7 +19,7 @@ struct LaserPoint {
     double rel_time_;  // 相对第一个点的时间戳  
     Eigen::Vector2f pos_;  // x, y 
     float range_; 
-    uint16_t index_;  
+    float rel_angle_;  
 };
 
 /**
