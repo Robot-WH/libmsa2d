@@ -8,16 +8,13 @@
  * @copyright Copyright (c) 2022
  * 
  */
-
 #include <glog/logging.h>
 #include "msa2d/Map/OccGridMapPyramid.h"
 #include "msa2d/common/tic_toc.h"
 #include "msa2d/Map/OccGridCnt.hpp"
 #include "msa2d/Map/OccGridLogOdd.hpp"
-
 namespace msa2d {
 namespace map {
-
 OccGridMapPyramid::OccGridMapPyramid(const Option& option) : option_(option) {
     std::cout << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" 
         << option.bottom_resolution  << ", 底层地图的尺寸 X：" << option.map_sizeX  

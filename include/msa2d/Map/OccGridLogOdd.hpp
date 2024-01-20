@@ -11,10 +11,8 @@
 #pragma once 
 #include <glog/logging.h>
 #include <cmath>
-
 namespace msa2d {
 namespace map {
-
 /**
  * @brief 基于对数概率法更新的占据栅格  
  * 

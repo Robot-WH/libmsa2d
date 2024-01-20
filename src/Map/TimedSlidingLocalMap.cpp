@@ -1,9 +1,7 @@
 #include <glog/logging.h>
 #include "msa2d/Map/TimedSlidingLocalMap.h"
-
 namespace msa2d {
 namespace map {
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 PointcloudLocalMap::PointcloudLocalMap(Option option) : option_(option) {
     LOG(INFO) << "create PointcloudLocalMap, window size:" << option_.window_size_;

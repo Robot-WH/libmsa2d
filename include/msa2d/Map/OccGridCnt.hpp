@@ -11,10 +11,8 @@
 #pragma once 
 #include <glog/logging.h>
 #include <cmath>
-
 namespace msa2d {
 namespace map {
-
 class OccGridCnt {
 public:
     /**
