@@ -6,13 +6,11 @@
  * @date 2022-10-02
  * 
  * @copyright Copyright (c) 2022
- * 
  */
 #pragma once 
 #include "OccGridMapBase.hpp"
 namespace msa2d {
 namespace map {
-
 /**
  * @brief Occupancy grid map 
  * 
@@ -32,6 +30,11 @@ public:
 
     virtual ~OccGridMapImpl() {}
 
+    /**
+     * @brief 
+     * 
+     * @param index 
+     */
     void updateSetOccupied(int index) override {
         occ_grid_map_.getCell(index).updateSetOccupied();
     }
@@ -53,10 +56,16 @@ public:
     }
 
     bool isOccupied(int xMap, int yMap) const override {
+        if (occ_grid_map_.pointOutOfMapBounds(xMap, yMap)) {
+            return false;
+        }
         return occ_grid_map_.getCell(xMap, yMap).isOccupied();
     }
 
     bool isFree(int xMap, int yMap) const override {
+        if (occ_grid_map_.pointOutOfMapBounds(xMap, yMap)) {
+            return false;
+        }
         return occ_grid_map_.getCell(xMap, yMap).isFree();
     }
 
@@ -85,7 +94,9 @@ public:
     }
 
     void moveTo(const Eigen::Vector2f& new_map_pos_in_world) override {
+        std::cout << "OccGridMapImpl moveTo" << std::endl;
         occ_grid_map_.moveTo(new_map_pos_in_world);
+        std::cout << "OccGridMapImpl moveTo end" << std::endl;
     }
 
     const GridMapBase& getGridMapBase() const override {

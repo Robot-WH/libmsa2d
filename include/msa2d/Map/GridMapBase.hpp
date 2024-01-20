@@ -84,6 +84,7 @@ public:
      * @brief 世界坐标下的坐标转到栅格地图坐标系下
      */
     inline Eigen::Vector2f PosWorldToMapf(const Eigen::Vector2f& world_pos) const {
+        // std::cout << "PosWorldToMapf, mapTworld_ * world_pos: " << (mapTworld_ * world_pos).transpose() << std::endl;
         return mapTworld_ * world_pos;
     }
 

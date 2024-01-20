@@ -90,7 +90,9 @@ public:
      * @return _CellType* 
      */
     virtual _CellType* createSameSizeMap() {
+        std::cout << "createSameSizeMap, getMapAllGridNum(): " << getMapAllGridNum() << std::endl;
         _CellType* mapArray = new _CellType[getMapAllGridNum()];
+        std::cout << "createSameSizeMap, done " << std::endl;
         return mapArray; 
     }
 
@@ -272,8 +274,11 @@ public:
      * @brief: 将当前GridMap的坐标原点移动到new_map_pos_in_world
      */    
     void moveTo(const Eigen::Vector2f& new_map_pos_in_world) override {
+        // std::cout << "moveTo begin, new_map_pos_in_world: " << new_map_pos_in_world.transpose() << std::endl;
         Eigen::Vector2i pos_in_prev_map = PosWorldToMapf(new_map_pos_in_world).cast<int>();  
-        auto new_map = createSameSizeMap(); 
+        std::cout << "PosWorldToMapf(), pos_in_prev_map: " << pos_in_prev_map.transpose() << std::endl;
+        _CellType* new_map = createSameSizeMap(); 
+        std::cout << "createSameSizeMap()" << std::endl;
         // 遍历原Map的每一个Grid
         for (uint16_t i = 0; i < getGridSizeX(); ++i) {
             for (uint16_t j = 0; j < getGridSizeY(); ++j) {
@@ -281,15 +286,19 @@ public:
                 Eigen::Vector2i new_grid_pos{i - pos_in_prev_map[0], j - pos_in_prev_map[1]};
                 // 是否在该地图范围内
                 if (!pointOutOfMapBounds(new_grid_pos)) {
+                    //  std::cout << "i: " << i << ",j:" << j << ",new_grid_pos x: " << new_grid_pos[0] << ",y: " << new_grid_pos[1] << std::endl;
                     new_map[new_grid_pos[1] * getGridSizeX() + new_grid_pos[0]] = getCell(i, j);
                 }
             }
         }
+        std::cout << "for for " << std::endl;
         resetArray(new_map);   // 将 mapArray_  指向 new_map 
+        // std::cout << "resetArray " << std::endl;
         // 对新地图原点在旧地图的坐标进行了取整   使得新地图与旧地图的栅格完全重合
         Eigen::Vector2f new_map_adjust_pos_in_world = 
             PosMapToWorldf(Eigen::Vector2f{pos_in_prev_map[0], pos_in_prev_map[1]});  
         setMapTransformation(new_map_adjust_pos_in_world); 
+        std::cout << "finish" << std::endl;
     }
 
 protected:

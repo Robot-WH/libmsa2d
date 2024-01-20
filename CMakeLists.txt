@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.0.2)
 project(libmsa2d)
 
 set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_BUILD_TYPE "Debug")
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
+set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_BUILD_TYPE "Release")
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
 
 find_package(Ceres REQUIRED)
 find_package(PCL 1.7 REQUIRED)
@@ -63,7 +64,6 @@ target_link_libraries(test_csm_grid
 #############
 ## INSTALL ##
 #############
-
 install(TARGETS msa2d_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .a
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}   # .so

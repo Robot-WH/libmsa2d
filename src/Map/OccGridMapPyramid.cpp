@@ -110,7 +110,7 @@ void OccGridMapPyramid::updateByScan(const std::vector<sensor::LaserPointContain
         // tt.toc("moveTo");
         map_in_world_ = new_map_pos_in_world;
     } 
-    // std::cout << "isCloseToBoundary() done" << std::endl;
+    std::cout << "isCloseToBoundary() done" << std::endl;
     unsigned int size = data_containers.size();
     for (unsigned int i = 0; i < size; ++i) {
         OccGridMapContainer_[i]->updateByScan(data_containers[i].dataPoints, laser_pose_in_world);
@@ -132,7 +132,9 @@ bool OccGridMapPyramid::isCloseToBoundary(const Eigen::Vector3f& laser_pose_in_w
 
 void OccGridMapPyramid::moveTo(const Eigen::Vector2f& new_map_pos_in_world) {
     for (uint16_t i = 0; i < OccGridMapContainer_.size(); ++i) {
+        std::cout << "OccGridMapPyramid::moveTo, i: " << i << std::endl;
         OccGridMapContainer_[i]->moveTo(new_map_pos_in_world);
+        std::cout << "OccGridMapPyramid::moveTo, done" << i << std::endl;
     }
 }
 

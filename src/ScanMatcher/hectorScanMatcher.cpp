@@ -44,19 +44,19 @@ Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWor
         }
             
         if (is_degenerate_) {
-            std::cout << "退化修复" << std::endl;
+            // std::cout << "退化修复" << std::endl;
             Pose2d matched_pose(tmp);
             // 计算校正量
             Pose2d correct = predict_pose.inv() * matched_pose;
-            std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
-            std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
-            std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
-            std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
+            // std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
+            // std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
+            // std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
+            // std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
             // 根据退化情况进行修复
             // 校正只在非退化方向产生作用
             correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
-            std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
-            std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
+            // std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
+            // std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
             tmp = (predict_pose * correct).vec();
             is_degenerate_ = false;  
         }
@@ -111,10 +111,8 @@ bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
 
     if (evaluate_degenerate) {
         Eigen::JacobiSVD<Eigen::Matrix3f> svd(H_, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        // Eigen::Matrix<float, 3, 1> x = svd.matrixV().col(2); // 最小奇异值对应的特征向量为解
-        // if (x[0] < 0) x = -x; // use the standard quaternion
         Eigen::Vector3f singular = svd.singularValues();    // singular value
-        std::cout<<"singular: "<<singular.transpose()<<std::endl;
+        // std::cout<<"singular: "<<singular.transpose()<<std::endl;
         V_f_ = svd.matrixV().transpose(); 
         V_u_ = V_f_; 
         is_degenerate_ = true;
@@ -127,7 +125,7 @@ bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
                 break; 
             }
             V_u_.row(i) = Eigen::Matrix<float, 1, 3>::Zero();  
-            std::cout << color::RED << "退化，方向：" << V_f_.row(i) << color::RESET << std::endl;
+            // std::cout << color::RED << "退化，方向：" << V_f_.row(i) << color::RESET << std::endl;
         }
     }
 
