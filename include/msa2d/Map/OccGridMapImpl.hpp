@@ -38,15 +38,28 @@ public:
     void updateSetOccupied(int index) override {
         occ_grid_map_.getCell(index).updateSetOccupied();
     }
-
+    /**
+     * @brief 
+     * 
+     * @param index 
+     */
     void updateSetFree(int index) override {
         occ_grid_map_.getCell(index).updateSetFree();
     }
-
+    /**
+     * @brief 
+     * 
+     * @param index 
+     */
     void updateUnsetFree(int index) override {
         occ_grid_map_.getCell(index).updateUnsetFree();
     }
-
+    /**
+     * @brief Get the Grid Probability object
+     * 
+     * @param index 
+     * @return const float& 
+     */
     const float& getGridProbability(const int& index) override {
         return occ_grid_map_.getCell(index).getGridProbability();
     }
@@ -55,6 +68,14 @@ public:
         return occ_grid_map_.getCell(xMap, yMap).getGridProbability();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param xMap 
+     * @param yMap 
+     * @return true 
+     * @return false 
+     */
     bool isOccupied(int xMap, int yMap) const override {
         if (occ_grid_map_.pointOutOfMapBounds(xMap, yMap)) {
             return false;
@@ -62,6 +83,14 @@ public:
         return occ_grid_map_.getCell(xMap, yMap).isOccupied();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param xMap 
+     * @param yMap 
+     * @return true 
+     * @return false 
+     */
     bool isFree(int xMap, int yMap) const override {
         if (occ_grid_map_.pointOutOfMapBounds(xMap, yMap)) {
             return false;
@@ -69,36 +98,88 @@ public:
         return occ_grid_map_.getCell(xMap, yMap).isFree();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param index 
+     * @return true 
+     * @return false 
+     */
     bool isOccupied(int index) const override {
         return occ_grid_map_.getCell(index).isOccupied();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param index 
+     * @return true 
+     * @return false 
+     */
     bool isFree(int index) const override {
         return occ_grid_map_.getCell(index).isFree();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param xMap 
+     * @param yMap 
+     * @return true 
+     * @return false 
+     */
     bool isUnknow(int xMap, int yMap) const override {
+        if (occ_grid_map_.pointOutOfMapBounds(xMap, yMap)) {
+            return false;
+        }
         return occ_grid_map_.getCell(xMap, yMap).isUnknow();
     }
 
+    /**
+     * @brief 
+     * 
+     * @param index 
+     * @return true 
+     * @return false 
+     */
     bool isUnknow(int index) const override {
         return occ_grid_map_.getCell(index).isUnknow();
     }
 
+    /**
+     * @brief 
+     * 
+     */
     void reset() override {
         occ_grid_map_.reset();   
     }
 
+    /**
+     * @brief 
+     * 
+     */
     void clear() override {
         occ_grid_map_.clear();  
     }
 
+    /**
+     * @brief 
+     * 
+     * @param new_map_pos_in_world 
+     */
     void moveTo(const Eigen::Vector2f& new_map_pos_in_world) override {
-        std::cout << "OccGridMapImpl moveTo" << std::endl;
+        mapModifyMutex_->lock();
+        // std::cout << "OccGridMapImpl moveTo" << std::endl;
         occ_grid_map_.moveTo(new_map_pos_in_world);
-        std::cout << "OccGridMapImpl moveTo end" << std::endl;
+        // std::cout << "OccGridMapImpl moveTo end" << std::endl;
+        mapModifyMutex_->unlock();  
     }
 
+    /**
+     * @brief Get the Grid Map Base object
+     * 
+     * @return const GridMapBase& 
+     */
     const GridMapBase& getGridMapBase() const override {
         return occ_grid_map_;
     }
@@ -190,7 +271,17 @@ protected:
         bresenhamCellOcc(endOffset, grid_update_marksheet);
     }
 
-    // 进行bresenham画线
+    /**
+     * @brief 进行bresenham画线
+     * 
+     * @param abs_da 
+     * @param abs_db 
+     * @param error_b 
+     * @param offset_a 
+     * @param offset_b 
+     * @param offset 
+     * @param grid_update_marksheet 
+     */
     void bresenham2D(unsigned int abs_da, unsigned int abs_db, int error_b, 
             int offset_a, int offset_b, unsigned int offset, std::vector<uint8_t>& grid_update_marksheet) {
         // https://www.jianshu.com/p/d63bf63a0e28

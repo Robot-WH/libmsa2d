@@ -123,7 +123,7 @@ public:
      * 
      */
     void clear() {
-        std::cout << "clear grid map " << std::endl;
+        // std::cout << "clear grid map " << std::endl;
         int size = getMapAllGridNum();
 
         for (int i = 0; i < size; ++i) {
@@ -166,12 +166,12 @@ public:
 
     /**
      * @brief Get the Cell object
-     * 
+     *                    安全的Cell获取，将判断Cell的坐标是否合法
      * @param x 
      * @param y 
      * @param cell 
-     * @return true 
-     * @return false 
+     * @return true 获取成功
+     * @return false  获取失败
      */
     bool getCell(int x, int y, _CellType& cell) {
         if (pointOutOfMapBounds(x, y)) {
@@ -183,7 +183,7 @@ public:
 
     /**
      * @brief Get the Cell object
-     * 
+     *                  直接获取Cell,不安全，需要在外部确保坐标合法
      * @param x 
      * @param y 
      * @return _CellType& 
@@ -194,7 +194,7 @@ public:
 
     /**
      * @brief Get the Cell object
-     * 
+     *                  直接获取Cell,不安全，需要在外部确保坐标合法
      * @param x 
      * @param y 
      * @return const _CellType& 
@@ -203,10 +203,22 @@ public:
         return mapArray_[y * sizeX_ + x];
     }
 
+    /**
+     * @brief Get the Cell object
+     *                  直接获取Cell,不安全，需要在外部确保坐标合法
+     * @param index 
+     * @return _CellType& 
+     */
     _CellType& getCell(int index) {
         return mapArray_[index];
     }
 
+    /**
+     * @brief Get the Cell object
+     *                  直接获取Cell,不安全，需要在外部确保坐标合法
+     * @param index 
+     * @return const _CellType& 
+     */
     const _CellType& getCell(int index) const {
         return mapArray_[index];
     }
