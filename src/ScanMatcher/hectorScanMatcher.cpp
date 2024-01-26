@@ -29,7 +29,7 @@ hectorScanMatcher::~hectorScanMatcher() {
  * @return Eigen::Vector3f 
  */
 Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWorld, 
-                                                                                        const std::vector<sensor::LaserPointContainer>& dataContainers, 
+                                                                                        const std::vector<sensor::LaserPosContainer>& dataContainers,
                                                                                         map::OccGridMapPyramid& map, 
                                                                                         Eigen::Matrix3f& covMatrix) {
     size_t size = map.getMapLevels();
@@ -67,11 +67,11 @@ Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWor
 
 Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& predictPoseInWorld, 
                                                                                                     map::OccGridMapBase* grid_map, 
-                                                                                                    const sensor::LaserPointContainer& dataContainer, 
+                                                                                                    const sensor::LaserPosContainer& dataContainer,
                                                                                                     Eigen::Matrix3f& covMatrix, 
                                                                                                     int maxIterations) {
     // 第一帧时，dataContainer为空 因此不会进行匹配                                                      
-    if (dataContainer.getSize() != 0) {
+    if (dataContainer.size() != 0) {
         // predictPoseInWorld 为相对于世界坐标系的位姿 ，这里将世界坐标系的位姿转换为相对于当前OccMap的
         Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().PoseWorldToMap(predictPoseInWorld));
         Eigen::Vector3f estimate(beginEstimateMap);
@@ -104,7 +104,7 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& predictPoseI
 */
 bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
                                                                                                                 map::OccGridMapBase* grid_map,
-                                                                                                                const sensor::LaserPointContainer& dataPoints,
+                                                                                                                const sensor::LaserPosContainer& dataPoints,
                                                                                                                 bool evaluate_degenerate) {
     /** 核心函数，计算H矩阵和dTr向量(ｂ列向量)---- occGridMapUtil.h 中 **/
     getCompleteHessianDerivs(estimate, grid_map, dataPoints, H_, dTr_);
@@ -156,10 +156,10 @@ void hectorScanMatcher::updateEstimatedPose(Eigen::Vector3f& estimate, const Eig
 
 void hectorScanMatcher::getCompleteHessianDerivs(const Eigen::Vector3f& pose,
                                                                                                                 map::OccGridMapBase* grid_map,
-                                                                                                                const sensor::LaserPointContainer& dataPoints,
+                                                                                                                const sensor::LaserPosContainer& dataPoints,
                                                                                                                 Eigen::Matrix3f& H,
                                                                                                                 Eigen::Vector3f& dTr) {
-    int size = dataPoints.getSize();
+    int size = dataPoints.size();
     // 获取变换矩阵
     Eigen::Isometry2f transform = 
         Eigen::Translation2f(pose[0], pose[1]) * Eigen::Rotation2Df(pose[2]);
@@ -170,7 +170,7 @@ void hectorScanMatcher::getCompleteHessianDerivs(const Eigen::Vector3f& pose,
     // 按照公式计算H、b
     for (int i = 0; i < size; ++i) {
         // 地图尺度下的激光坐标系下的激光点坐标
-        const Eigen::Vector2f &currPoint(dataPoints.getVecEntry(i));
+        const Eigen::Vector2f &currPoint(dataPoints[i]);
         // 将激光点坐标转换到地图系上, 通过双线性插值计算栅格概率
         // transformedPointData[0]--通过插值得到的栅格值
         // transformedPointData[1]--栅格值x方向的梯度

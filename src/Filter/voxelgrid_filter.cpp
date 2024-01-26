@@ -6,16 +6,15 @@
  * @date 2023-07-06
  * 
  * @copyright Copyright (c) 2023
- * 
  */
 #include "msa2d/Filter/voxelgrid_filter.h"
-
 namespace msa2d {
 namespace filter {
-
 VoxelGridFilter::VoxelGridFilter(float cell_size, float lidar_range) 
 : cell_size_(cell_size), lidar_range_(lidar_range) {
-    map_length_ = std::ceil(2 * lidar_range / cell_size); 
+    map_length_ = std::ceil(2 * lidar_range_ / cell_size); 
+    // center_x_ = lidar_range_;
+    // center_y_ = lidar_range_;
 }
 
 /**
@@ -64,6 +63,7 @@ void VoxelGridFilter::Filter(sensor::LaserPointCloud& point_cloud) {
     uint16_t best_index = 0;  
 
     for (uint16_t i = 0; i < point_cloud.size(); ++i) {
+        //  计算
         float map_x = (point_cloud[i].pos_.x() + lidar_range_) / cell_size_; 
         float map_y = (point_cloud[i].pos_.y() + lidar_range_) / cell_size_; 
         float cost_v = std::pow(map_x - (uint16_t)map_x, 2) + 
@@ -93,7 +93,6 @@ void VoxelGridFilter::Filter(sensor::LaserPointCloud& point_cloud) {
         //     hash_map_[key] = CellInfo(i, cost_v);
         // }
     }
-
 
     // sensor::LaserPointCloud filtered_pointcloud;
     // filtered_pointcloud.reserve(hash_map_.size());

@@ -1,26 +1,24 @@
-
 #pragma once 
-
 #include <vector>
 #include <memory>
 #include "Eigen/Core"
 // #include "cartographer/transform/rigid_transform.h"
 #include "glog/logging.h"
 #include "../common/Pose2d.hpp"
-
 namespace msa2d {
 namespace sensor {
-
 /**
  * @brief 激光点结构
  * 
  */
 struct LaserPoint {
     double rel_time_;  // 相对第一个点的时间戳  
-    Eigen::Vector2f pos_;  // x, y 
+    Eigen::Vector2f pos_;  // 激光点的坐标值   x, y 
     float range_; 
     float rel_angle_;  
 };
+
+using LaserPosContainer = std::vector<Eigen::Vector2f>;
 
 /**
  * @brief 点云结构, 包含雷达一帧数据的所有数据点 
@@ -116,7 +114,8 @@ struct LaserScan {
     double end_time_;    
     double scan_period_;   // 一帧的总时间
     // std::vector<LaserPoint> pointcloud_;
-    LaserPointCloud pointcloud_;
+    LaserPointCloud pointcloud_;     // 有效点云   真正使用的
+    LaserPointCloud invalid_pointcloud_;   // 超过范围的点云    用于更新地图
 };
 
 /**
@@ -137,19 +136,6 @@ static LaserPointCloud TransformPointCloud(const LaserPointCloud& point_cloud,
   }
   return LaserPointCloud(points);
 }
-
-// // Transforms 'point_cloud' according to 'transform'.
-// PointCloud TransformPointCloud(const PointCloud& point_cloud,
-//                                const transform::Rigid3f& transform);
-
-// // Transforms 'point_cloud' according to 'transform'.
-// TimedPointCloud TransformTimedPointCloud(const TimedPointCloud& point_cloud,
-//                                          const transform::Rigid3f& transform);
-
-// Returns a new point cloud without points that fall outside the region defined
-// by 'min_z' and 'max_z'.
-// PointCloud CropPointCloud(const PointCloud& point_cloud, float min_z,
-//                           float max_z);
 
 }  // namespace 
 }  // namespace 

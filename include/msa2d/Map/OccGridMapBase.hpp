@@ -13,7 +13,7 @@
 #include <Eigen/Geometry>
 #include <mutex>
 #include "GridMapImpl.hpp"
-#include "../Sensor/LaserPointContainer.h"
+#include "../Sensor/point_cloud.hpp"
 #include "../common/UtilFunctions.hpp"
 namespace msa2d {
 namespace map {
@@ -39,7 +39,8 @@ public:
     virtual bool isUnknow(int xMap, int yMap) const  = 0;
     virtual void reset() = 0;
     virtual void clear() = 0; 
-    virtual void updateByScan(const std::vector<Eigen::Vector2f>& laser_same_scale, 
+    virtual void updateByScan(const sensor::LaserPosContainer & laser_same_scale,
+            const sensor::LaserPosContainer& invalid_laser_same_scale,
             const Eigen::Vector3f& scan_pose_in_world) = 0;  
     virtual void moveTo(const Eigen::Vector2f& new_map_pos_in_world) = 0;
     virtual const GridMapBase& getGridMapBase() const = 0;  

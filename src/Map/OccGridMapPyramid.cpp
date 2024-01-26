@@ -91,8 +91,9 @@ void OccGridMapPyramid::onMapUpdated() {
     }
 }
 
-void OccGridMapPyramid::updateByScan(const std::vector<sensor::LaserPointContainer>& data_containers, 
-                                                            const Eigen::Vector3f &laser_pose_in_world) {
+void OccGridMapPyramid::updateByScan(const std::vector<sensor::LaserPosContainer>& data_containers,
+                                                                                    const std::vector<sensor::LaserPosContainer>& invalid_data_containers,
+                                                                                    const Eigen::Vector3f &laser_pose_in_world) {
     // 判断地图是否需要移动
     if (isCloseToBoundary(laser_pose_in_world)) {
         std::cout << color::GREEN << "进入submap边界，submap进行移动" 
@@ -110,7 +111,7 @@ void OccGridMapPyramid::updateByScan(const std::vector<sensor::LaserPointContain
     std::cout << "isCloseToBoundary() done" << std::endl;
     unsigned int size = data_containers.size();
     for (unsigned int i = 0; i < size; ++i) {
-        OccGridMapContainer_[i]->updateByScan(data_containers[i].dataPoints, laser_pose_in_world);
+        OccGridMapContainer_[i]->updateByScan(data_containers[i], invalid_data_containers[i], laser_pose_in_world);
     }
     //std::cout << "\n";
 }

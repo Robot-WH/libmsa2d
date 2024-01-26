@@ -312,7 +312,6 @@ public:
         setMapTransformation(new_map_adjust_pos_in_world); 
         std::cout << "finish" << std::endl;
     }
-
 protected:
     _CellType* mapArray_; ///< Map representation used with plain pointer array.
 };

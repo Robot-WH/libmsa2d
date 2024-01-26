@@ -56,8 +56,9 @@ public:
      * @param dataContainer    第一层激光数据，其他层激光数据存在 dataContainers 中
      * @param laser_pose_in_world   当前帧的世界系下位姿
      */
-    void updateByScan(const std::vector<sensor::LaserPointContainer>& data_containers, 
-                                                            const Eigen::Vector3f &laser_pose_in_world);
+    void updateByScan(const std::vector<sensor::LaserPosContainer>& data_containers,
+                                            const std::vector<sensor::LaserPosContainer>& invalid_data_containers,
+                                            const Eigen::Vector3f &laser_pose_in_world);
 
     /**
      * @brief: 检查是否接近地图金字塔边界  
@@ -83,7 +84,6 @@ protected:
     Option option_; 
     Eigen::Vector2f map_in_world_;    // 地图原点在世界坐标系下的坐标
     std::vector<OccGridMapBase*> OccGridMapContainer_; /// 不同图层的地图操作对象    层数越高  分辨率越低   
-    // std::vector<sensor::LaserPointContainer> dataContainers;  /// 不同图层对应的激光数据
 };
 } // namespace 
 }

@@ -1,7 +1,7 @@
 #pragma once 
 #include <Eigen/Geometry>
 #include <eigen3/Eigen/Dense>
-#include "../Sensor/LaserPointContainer.h"
+#include "../Sensor/point_cloud.hpp"
 #include "../Map/OccGridMapBase.hpp"
 #include "../Map/OccGridMapPyramid.h"
 namespace msa2d {
@@ -29,7 +29,7 @@ public:
      * @return  
      */
     virtual Eigen::Vector3f Solve(const Eigen::Vector3f& predictPoseInWorld, 
-                                                                const std::vector<sensor::LaserPointContainer>& dataContainers, 
+                                                                const std::vector<sensor::LaserPosContainer>& dataContainers,
                                                                 map::OccGridMapPyramid& map, 
                                                                 Eigen::Matrix3f& covMatrix);
 
@@ -45,7 +45,7 @@ private:
      */
     Eigen::Vector3f matchData(const Eigen::Vector3f& predictPoseInWorld, 
                                                             map::OccGridMapBase* grid_map, 
-                                                            const sensor::LaserPointContainer& dataContainer, 
+                                                            const sensor::LaserPosContainer& dataContainer,
                                                             Eigen::Matrix3f& covMatrix, 
                                                             int maxIterations);
 
@@ -59,7 +59,7 @@ protected:
     */
     bool estimateTransformationGN(Eigen::Vector3f& estimate,
                                                                         map::OccGridMapBase* grid_map,
-                                                                        const sensor::LaserPointContainer& dataPoints,
+                                                                        const sensor::LaserPosContainer& dataPoints,
                                                                         bool evaluate_degenerate = false);
 
     void updateEstimatedPose(Eigen::Vector3f &estimate, const Eigen::Vector3f &change);
@@ -74,7 +74,7 @@ protected:
      */
     void getCompleteHessianDerivs(const Eigen::Vector3f& pose,
                                                                         map::OccGridMapBase* grid_map,
-                                                                        const sensor::LaserPointContainer& dataPoints,
+                                                                        const sensor::LaserPosContainer& dataPoints,
                                                                         Eigen::Matrix3f& H,
                                                                         Eigen::Vector3f& dTr);
 
