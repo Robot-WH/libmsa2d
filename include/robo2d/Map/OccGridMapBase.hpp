@@ -15,7 +15,7 @@
 #include "GridMapImpl.hpp"
 #include "../Sensor/point_cloud.hpp"
 #include "../common/UtilFunctions.hpp"
-namespace msa2d {
+namespace robo2d {
 namespace map {
 
 class OccGridMapBase {

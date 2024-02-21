@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>libmsa2d</name>
+  <name>librobo2d</name>
   <version>0.0.0</version>
   <description>The multi-senser algorithm lib package</description>
 

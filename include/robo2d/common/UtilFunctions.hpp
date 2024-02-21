@@ -3,7 +3,7 @@
 #define utilfunctions_h__
 
 #include <cmath>
-namespace msa2d {
+namespace robo2d {
 namespace math {
 static inline float sqr(float val) {
   return val*val;

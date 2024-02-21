@@ -13,7 +13,7 @@
 #include "OccGridMapImpl.hpp"
 #include "../common/color.hpp"
 
-namespace msa2d {
+namespace robo2d {
 namespace map {
 
 /**

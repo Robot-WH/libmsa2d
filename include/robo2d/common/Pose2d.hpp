@@ -4,7 +4,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include "UtilFunctions.hpp"
-namespace msa2d {
+namespace robo2d {
 class Pose2d {
 public:
     Pose2d() {
@@ -71,8 +71,15 @@ public:
         return !(*this == rhs);  
     }
 
+    Pose2d& operator=(const Pose2d& other) {  
+        if (this != &other) {  // 防止自赋值  
+            vec_ = other.vec_;  // 使用Eigen的赋值运算符  
+        }  
+        return *this;  
+    }  
+
     // 重载pose的乘法   Pose2d (x,y,theta)  p1*p2   T1*T2  
-    const Pose2d operator*(const Pose2d& p2) {  
+    const Pose2d operator*(const Pose2d& p2) const {
         Pose2d p;
         Eigen::Matrix2f R;
         // 构造旋转矩阵   R1<-2

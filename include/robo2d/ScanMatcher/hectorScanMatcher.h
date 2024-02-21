@@ -4,7 +4,7 @@
 #include "../Sensor/point_cloud.hpp"
 #include "../Map/OccGridMapBase.hpp"
 #include "../Map/OccGridMapPyramid.h"
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 /**
  * @brief: hector-slam所使用的匹配算法

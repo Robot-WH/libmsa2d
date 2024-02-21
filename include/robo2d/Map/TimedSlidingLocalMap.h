@@ -3,7 +3,7 @@
 #include <mutex>
 #include <nabo/nabo.h>
 #include "../Sensor/point_cloud.hpp"
-namespace msa2d {
+namespace robo2d {
 namespace map {
 class PointcloudLocalMap {
 public:

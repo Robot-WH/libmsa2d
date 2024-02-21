@@ -1,6 +1,6 @@
 #include <glog/logging.h>
-#include "msa2d/Map/TimedSlidingLocalMap.h"
-namespace msa2d {
+#include "robo2d/Map/TimedSlidingLocalMap.h"
+namespace robo2d {
 namespace map {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 PointcloudLocalMap::PointcloudLocalMap(Option option) : option_(option) {

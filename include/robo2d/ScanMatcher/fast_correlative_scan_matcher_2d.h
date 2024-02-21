@@ -31,11 +31,11 @@
 // #include "cartographer/common/port.h"
 // #include "cartographer/mapping/2d/grid_2d.h"
 #include "correlative_scan_matcher_2d.h"
-#include "msa2d/Map/OccGridMapBase.hpp"
+#include "robo2d/Map/OccGridMapBase.hpp"
 // #include "cartographer/mapping/proto/scan_matching/fast_correlative_scan_matcher_options_2d.pb.h"
 // #include "cartographer/sensor/point_cloud.h"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 
 class PrecomputationGrid2D {

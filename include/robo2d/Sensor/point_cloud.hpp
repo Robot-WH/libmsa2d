@@ -5,7 +5,7 @@
 // #include "cartographer/transform/rigid_transform.h"
 #include "glog/logging.h"
 #include "../common/Pose2d.hpp"
-namespace msa2d {
+namespace robo2d {
 namespace sensor {
 /**
  * @brief 激光点结构

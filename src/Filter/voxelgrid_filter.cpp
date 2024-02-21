@@ -7,8 +7,8 @@
  * 
  * @copyright Copyright (c) 2023
  */
-#include "msa2d/Filter/voxelgrid_filter.h"
-namespace msa2d {
+#include "robo2d/Filter/voxelgrid_filter.h"
+namespace robo2d {
 namespace filter {
 VoxelGridFilter::VoxelGridFilter(float cell_size, float lidar_range) 
 : cell_size_(cell_size), lidar_range_(lidar_range) {

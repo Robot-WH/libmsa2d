@@ -6,10 +6,10 @@
 // #include "cartographer/mapping/2d/map_limits.h"
 // #include "cartographer/mapping/2d/xy_index.h"
 // #include "cartographer/sensor/point_cloud.h"
-#include "msa2d/Sensor/point_cloud.hpp"
-#include "msa2d/Map/GridMapBase.hpp"
+#include "robo2d/Sensor/point_cloud.hpp"
+#include "robo2d/Map/GridMapBase.hpp"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 
 typedef std::vector<Eigen::Array2i> DiscreteScan2D;

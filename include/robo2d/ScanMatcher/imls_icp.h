@@ -15,7 +15,7 @@
 
 #include <sys/time.h>
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 
 class IMLSICPMatcher {

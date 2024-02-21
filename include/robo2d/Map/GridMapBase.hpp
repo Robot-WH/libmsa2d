@@ -12,7 +12,7 @@
 
 #include <Eigen/Geometry>
 
-namespace msa2d {
+namespace robo2d {
 namespace map {
 
 /**

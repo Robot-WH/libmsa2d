@@ -21,10 +21,10 @@
 
 #include "Eigen/Geometry"
 #include "glog/logging.h"
-#include "msa2d/ScanMatcher/fast_correlative_scan_matcher_2d.h"
-#include "msa2d/common/tic_toc.h"
+#include "robo2d/ScanMatcher/fast_correlative_scan_matcher_2d.h"
+#include "robo2d/common/tic_toc.h"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 namespace {
 

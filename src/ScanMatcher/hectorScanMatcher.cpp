@@ -1,8 +1,8 @@
 #include <glog/logging.h>
-#include "msa2d/ScanMatcher/hectorScanMatcher.h"
-#include "msa2d/common/Pose2d.hpp"
+#include "robo2d/ScanMatcher/hectorScanMatcher.h"
+#include "robo2d/common/Pose2d.hpp"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 /**
  * @brief Construct a new hector Scan Matcher::hector Scan Matcher object
@@ -43,23 +43,23 @@ Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWor
             tmp = matchData(tmp, map.getGridMap(index), dataContainers[index], covMatrix, 3);
         }
             
-        if (is_degenerate_) {
-            // std::cout << "退化修复" << std::endl;
-            Pose2d matched_pose(tmp);
-            // 计算校正量
-            Pose2d correct = predict_pose.inv() * matched_pose;
-            // std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
-            // std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
-            // std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
-            // std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
-            // 根据退化情况进行修复
-            // 校正只在非退化方向产生作用
-            correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
-            // std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
-            // std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
-            tmp = (predict_pose * correct).vec();
-            is_degenerate_ = false;  
-        }
+        // if (is_degenerate_) {
+        //     // std::cout << "退化修复" << std::endl;
+        //     Pose2d matched_pose(tmp);
+        //     // 计算校正量
+        //     Pose2d correct = predict_pose.inv() * matched_pose;
+        //     // std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
+        //     // std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
+        //     // std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
+        //     // std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
+        //     // 根据退化情况进行修复
+        //     // 校正只在非退化方向产生作用
+        //     correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
+        //     // std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
+        //     // std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
+        //     tmp = (predict_pose * correct).vec();
+        //     is_degenerate_ = false;  
+        // }
     }
 
     return tmp;

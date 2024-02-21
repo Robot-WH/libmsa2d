@@ -9,11 +9,11 @@
  * 
  */
 #include <glog/logging.h>
-#include "msa2d/Map/OccGridMapPyramid.h"
-#include "msa2d/common/tic_toc.h"
-#include "msa2d/Map/OccGridCnt.hpp"
-#include "msa2d/Map/OccGridLogOdd.hpp"
-namespace msa2d {
+#include "robo2d/Map/OccGridMapPyramid.h"
+#include "robo2d/common/tic_toc.h"
+#include "robo2d/Map/OccGridCnt.hpp"
+#include "robo2d/Map/OccGridLogOdd.hpp"
+namespace robo2d {
 namespace map {
 OccGridMapPyramid::OccGridMapPyramid(const Option& option) : option_(option) {
     std::cout << "创建占据栅格地图金字塔OccGridMapPyramid，底层分辨率：" 

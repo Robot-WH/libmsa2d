@@ -9,7 +9,7 @@
 #include <chrono>
 #include <string>
 
-namespace msa2d {
+namespace robo2d {
 namespace time {
 
 class TicToc

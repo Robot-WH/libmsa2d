@@ -9,7 +9,7 @@
  */
 #pragma once 
 #include "OccGridMapBase.hpp"
-namespace msa2d {
+namespace robo2d {
 namespace map {
 /**
  * @brief Occupancy grid map 

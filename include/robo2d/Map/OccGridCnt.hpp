@@ -11,7 +11,7 @@
 #pragma once 
 #include <glog/logging.h>
 #include <cmath>
-namespace msa2d {
+namespace robo2d {
 namespace map {
 class OccGridCnt {
 public:

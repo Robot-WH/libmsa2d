@@ -4,7 +4,7 @@
 #include <Eigen/Core>
 #include <memory>
 #include "../common/Pose2d.hpp"
-namespace msa2d {
+namespace robo2d {
 namespace sensor {
 struct ImuData {
     double time_stamp_ = 0;

@@ -1,6 +1,6 @@
-#include "msa2d/ScanMatcher/imls_icp.h"
+#include "robo2d/ScanMatcher/imls_icp.h"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 
 IMLSICPMatcher::IMLSICPMatcher()

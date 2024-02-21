@@ -12,7 +12,7 @@
 #include "../common/tic_toc.h"
 #include "GridMapBase.hpp"
 
-namespace msa2d {
+namespace robo2d {
 namespace map {
 
 /**

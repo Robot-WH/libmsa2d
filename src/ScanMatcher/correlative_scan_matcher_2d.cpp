@@ -1,8 +1,8 @@
 #include <cmath>
 #include <iostream>
-#include "msa2d/ScanMatcher/correlative_scan_matcher_2d.h"
+#include "robo2d/ScanMatcher/correlative_scan_matcher_2d.h"
 
-namespace msa2d {
+namespace robo2d {
 namespace ScanMatcher {
 
 /**
