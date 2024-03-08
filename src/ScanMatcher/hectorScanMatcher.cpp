@@ -1,7 +1,6 @@
 #include <glog/logging.h>
 #include "robo2d/ScanMatcher/hectorScanMatcher.h"
 #include "robo2d/common/Pose2d.hpp"
-
 namespace robo2d {
 namespace ScanMatcher {
 /**
@@ -42,24 +41,25 @@ Eigen::Vector3f hectorScanMatcher::Solve(const Eigen::Vector3f& predictPoseInWor
         } else {
             tmp = matchData(tmp, map.getGridMap(index), dataContainers[index], covMatrix, 3);
         }
-            
-        // if (is_degenerate_) {
-        //     // std::cout << "退化修复" << std::endl;
-        //     Pose2d matched_pose(tmp);
-        //     // 计算校正量
-        //     Pose2d correct = predict_pose.inv() * matched_pose;
-        //     // std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
-        //     // std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
-        //     // std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
-        //     // std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
-        //     // 根据退化情况进行修复
-        //     // 校正只在非退化方向产生作用
-        //     correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
-        //     // std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
-        //     // std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
-        //     tmp = (predict_pose * correct).vec();
-        //     is_degenerate_ = false;  
-        // }
+        std::cout << "原Pose: " << tmp.transpose() << std::endl;
+        if (is_degenerate_) {
+            // std::cout << "退化修复" << std::endl;
+            // Pose2d matched_pose(tmp);
+            // // 计算校正量
+            // Pose2d correct = predict_pose.inv() * matched_pose;
+            // // std::cout << "原校正量: " << correct.vec().transpose() << std::endl;
+            // // std::cout << "V_u_: " << std::endl << V_u_ << std::endl;
+            // // std::cout << "V_f_: " << std::endl << V_f_ << std::endl;
+            // // std::cout << "V_u_ * correct: " << (V_u_ * correct.vec()).transpose() << std::endl;
+            // // 根据退化情况进行修复
+            // // 校正只在非退化方向产生作用
+            // correct.SetVec(V_f_.inverse() * V_u_ * correct.vec());
+            // // std::cout << "修正校正量: " << correct.vec().transpose() << std::endl;
+            // // std::cout << "V_f_ * correct: " << (V_f_ * correct.vec()).transpose() << std::endl;
+            // tmp = (predict_pose * correct).vec();
+            // is_degenerate_ = false;  
+            // std::cout << "修复后Pose: " << tmp.transpose() << std::endl;
+        }
     }
 
     return tmp;
@@ -76,11 +76,14 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& predictPoseI
         Eigen::Vector3f beginEstimateMap(grid_map->getGridMapBase().PoseWorldToMap(predictPoseInWorld));
         Eigen::Vector3f estimate(beginEstimateMap);
         // 2. 第一次迭代
-        estimateTransformationGN(estimate, grid_map, dataContainer, 1);
-        int numIter = maxIterations;
-        /** 3. 多次迭代求解 **/
-        for (int i = 0; i < numIter; ++i) {
-            estimateTransformationGN(estimate, grid_map, dataContainer);
+        if (estimateTransformationGN(estimate, grid_map, dataContainer, 1)) {
+            int numIter = maxIterations;
+            /** 3. 多次迭代求解 **/
+            for (int i = 0; i < numIter; ++i) {
+                if (!estimateTransformationGN(estimate, grid_map, dataContainer)) {
+                    break;
+                }
+            }
         }
         // 角度正则化
         convert::NormAngle(estimate[2]);
@@ -88,7 +91,8 @@ Eigen::Vector3f hectorScanMatcher::matchData(const Eigen::Vector3f& predictPoseI
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0).inverse());
         // covMatrix.block<2,2>(0,0) = (H.block<2,2>(0,0));
         // 使用Hessian矩阵近似协方差矩阵
-        covMatrix = H_;
+        // covMatrix = H_;
+        std::cout << "estimate: " << estimate.transpose() << std::endl;
         // 结果转换回物理坐标系下 -- 转换回实际尺度
         return grid_map->getGridMapBase().PoseMapToWorld(estimate);
     }
@@ -112,7 +116,7 @@ bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
     if (evaluate_degenerate) {
         Eigen::JacobiSVD<Eigen::Matrix3f> svd(H_, Eigen::ComputeFullU | Eigen::ComputeFullV);
         Eigen::Vector3f singular = svd.singularValues();    // singular value
-        // std::cout<<"singular: "<<singular.transpose()<<std::endl;
+        std::cout<<"singular: "<<singular.transpose()<<std::endl;
         V_f_ = svd.matrixV().transpose(); 
         V_u_ = V_f_; 
         is_degenerate_ = true;
@@ -125,23 +129,27 @@ bool hectorScanMatcher::estimateTransformationGN(Eigen::Vector3f& estimate,
                 break; 
             }
             V_u_.row(i) = Eigen::Matrix<float, 1, 3>::Zero();  
-            // std::cout << color::RED << "退化，方向：" << V_f_.row(i) << color::RESET << std::endl;
+            std::cout << color::RED << "退化，方向：" << V_f_.row(i) << color::RESET << std::endl;
         }
     }
 
-    //std::cout << "\nH\n" << H  << "\n";
+    std::cout << "\nH\n" << H_  << "\n";
     //std::cout << "\ndTr\n" << dTr  << "\n";
     // 判断H是否可逆, 判断增量非0,避免无用计算
-    if ((H_(0, 0) != 0.0f) && (H_(1, 1) != 0.0f)) {
+    // if ((H_(0, 0) != 0.0f) && (H_(1, 1) != 0.0f)) {
+    if ((H_(0, 0) > 0.1) && (H_(1, 1) > 0.1)) {
+        std::cout << "求解位姿增量" << std::endl;
+        std::cout << "H det:" << H_.determinant() << " H_ inv: " << H_.inverse().matrix() << std::endl;
         // 求解位姿增量
         Eigen::Vector3f searchDir(H_.inverse() * dTr_);
+        std::cout << "searchDir:" << searchDir.transpose() << std::endl;
         // 角度增量不能太大
         if (searchDir[2] > 0.2f) {
-            searchDir[2] = 0.2f;
             std::cout << "SearchDir angle change too large\n";
+            return false;
         } else if (searchDir[2] < -0.2f) {
-            searchDir[2] = -0.2f;
             std::cout << "SearchDir angle change too large\n";
+            return false;
         }
         //　更新估计值 --- 结果在地图尺度下
         updateEstimatedPose(estimate, searchDir);
