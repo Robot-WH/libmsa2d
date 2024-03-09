@@ -92,6 +92,7 @@ protected:
     Eigen::Matrix3f H_;
     Eigen::Matrix3f V_u_;  
     Eigen::Matrix3f V_f_;  
+    Eigen::Matrix3f V_deg_;  
     bool is_degenerate_ = false;
 };
 }
